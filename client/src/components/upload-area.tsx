@@ -5,10 +5,12 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useFileUpload } from "@/hooks/use-file-upload";
 import { useStart3DConversion } from "@/hooks/use-scan-data";
+import { useProcessingState } from "@/hooks/use-processing-state";
 
 export default function UploadArea() {
   const { uploadedFiles, uploadFile, removeFile, isUploading } = useFileUpload();
   const start3DConversion = useStart3DConversion();
+  const { setCurrentScan } = useProcessingState();
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     acceptedFiles.forEach(file => {
@@ -33,8 +35,11 @@ export default function UploadArea() {
 
   const handleProcessFiles = () => {
     if (uploadedFileIds.length > 0) {
-      // Process the first uploaded file
-      start3DConversion.mutate(uploadedFileIds[0]);
+      const scanId = uploadedFileIds[0];
+      // Set this scan as the current one in processing state
+      setCurrentScan(scanId);
+      // Start 3D conversion for this scan
+      start3DConversion.mutate(scanId);
     }
   };
 
