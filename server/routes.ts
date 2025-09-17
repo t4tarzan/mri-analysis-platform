@@ -60,13 +60,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Development-only test helper endpoint for creating scan records
+  if (process.env.NODE_ENV === 'development') {
+    app.post("/api/scans/test-seed", async (req, res) => {
+      try {
+        const { filename = "test-scan.jpg", mimeType = "image/jpeg", fileSize = 1024000 } = req.body;
+        
+        const scanData = {
+          filename: `test-${Date.now()}-${filename}`,
+          originalName: filename,
+          fileSize,
+          mimeType,
+          processingStatus: "pending" as const,
+          threeDModelPath: null,
+          detections: [],
+          analysisCompleted: false,
+        };
+
+        const scan = await storage.createMriScan(scanData);
+        
+        // Start processing simulation
+        setTimeout(() => processImageToModel(scan.id), 1000);
+
+        res.status(201).json(scan);
+      } catch (error) {
+        console.error("Test seed error:", error);
+        res.status(500).json({ message: "Failed to create test scan" });
+      }
+    });
+  }
+
   // Upload MRI scan files
   app.post("/api/scans/upload", upload.single('mriFile'), async (req, res) => {
     try {
-      console.log('Upload request received. Files:', req.files);
-      console.log('Upload request file:', req.file);
-      console.log('Upload request body keys:', Object.keys(req.body || {}));
-      console.log('Upload request headers content-type:', req.headers['content-type']);
+      console.log('=== UPLOAD REQUEST DEBUG ===');
+      console.log('Method:', req.method);
+      console.log('URL:', req.url);
+      console.log('Content-Type:', req.headers['content-type']);
+      console.log('Files:', req.files);
+      console.log('File:', req.file);
+      console.log('Body keys:', Object.keys(req.body || {}));
+      console.log('Raw body available:', !!req.body);
+      console.log('=== END DEBUG ===');
       
       if (!req.file) {
         console.error('No file in req.file, returning 400');
@@ -99,10 +134,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Run anomaly detection
   app.post("/api/scans/:id/detect", async (req, res) => {
     try {
+      console.log(`Detection request for scan ID: ${req.params.id}`);
       const { sensitivity = 75, confidence = 60, detectionType = "aneurysms" } = req.body;
       
       const scan = await storage.getMriScan(req.params.id);
       if (!scan) {
+        console.log(`Scan ${req.params.id} not found for detection`);
         return res.status(404).json({ message: "Scan not found" });
       }
 
