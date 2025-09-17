@@ -53,10 +53,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteMriScan(id: string): Promise<boolean> {
-    // First delete associated analysis reports
-    await db.delete(analysisReports).where(eq(analysisReports.scanId, id));
-    
-    // Then delete the scan
+    // Cascade deletion is now handled at database level
     const result = await db.delete(mriScans).where(eq(mriScans.id, id));
     return (result.rowCount || 0) > 0;
   }

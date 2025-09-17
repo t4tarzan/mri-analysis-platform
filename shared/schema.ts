@@ -18,7 +18,7 @@ export const mriScans = pgTable("mri_scans", {
 
 export const analysisReports = pgTable("analysis_reports", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  scanId: varchar("scan_id").references(() => mriScans.id).notNull(),
+  scanId: varchar("scan_id").references(() => mriScans.id, { onDelete: 'cascade' }).notNull(),
   riskScore: real("risk_score").notNull(),
   detectionAccuracy: real("detection_accuracy").notNull(),
   imageQuality: real("image_quality").notNull(),

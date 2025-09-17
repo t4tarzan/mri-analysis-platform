@@ -6,6 +6,8 @@ import { z } from "zod";
 import { insertMriScanSchema, insertAnalysisReportSchema, Detection, CriticalFinding, SecondaryFinding, TechnicalSummary } from "@shared/schema";
 import path from "path";
 import fs from "fs";
+import { randomUUID } from "crypto";
+import { fileTypeFromBuffer } from "file-type";
 
 // Configure multer for file uploads
 const upload = multer({
@@ -18,16 +20,30 @@ const upload = multer({
       cb(null, uploadDir);
     },
     filename: (req, file, cb) => {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-      cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+      // Generate secure filename using UUID to prevent path traversal attacks
+      const secureFilename = randomUUID();
+      // Sanitize and validate file extension 
+      const ext = path.extname(file.originalname).toLowerCase();
+      const allowedExtensions = ['.jpg', '.jpeg', '.png'];
+      
+      if (!allowedExtensions.includes(ext)) {
+        return cb(new Error('Invalid file extension'), '');
+      }
+      
+      cb(null, `mri-scan-${secureFilename}${ext}`);
     }
   }),
   fileFilter: (req, file, cb) => {
-    // Accept only JPG and PNG files
-    if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png') {
+    // Enhanced file validation for medical platform security
+    const allowedMimeTypes = ['image/jpeg', 'image/png'];
+    const ext = path.extname(file.originalname).toLowerCase();
+    const allowedExtensions = ['.jpg', '.jpeg', '.png'];
+    
+    // Validate both MIME type and file extension
+    if (allowedMimeTypes.includes(file.mimetype) && allowedExtensions.includes(ext)) {
       cb(null, true);
     } else {
-      cb(new Error('Only JPG and PNG files are allowed'));
+      cb(new Error('Only JPG and PNG image files are allowed'));
     }
   },
   limits: {
@@ -93,19 +109,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Upload MRI scan files
   app.post("/api/scans/upload", upload.single('mriFile'), async (req, res) => {
     try {
-      console.log('=== UPLOAD REQUEST DEBUG ===');
-      console.log('Method:', req.method);
-      console.log('URL:', req.url);
-      console.log('Content-Type:', req.headers['content-type']);
-      console.log('Files:', req.files);
-      console.log('File:', req.file);
-      console.log('Body keys:', Object.keys(req.body || {}));
-      console.log('Raw body available:', !!req.body);
-      console.log('=== END DEBUG ===');
+      // Secure logging for medical platform - only in development mode
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Upload request received for file:', req.file?.filename);
+      }
       
       if (!req.file) {
         console.error('No file in req.file, returning 400');
         return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      // Enhanced content-based file validation for medical platform security
+      try {
+        const fileBuffer = fs.readFileSync(req.file.path);
+        const fileType = await fileTypeFromBuffer(fileBuffer);
+        
+        if (!fileType || !['image/jpeg', 'image/png'].includes(fileType.mime)) {
+          // Delete the uploaded file if validation fails
+          fs.unlinkSync(req.file.path);
+          return res.status(400).json({ message: "Invalid file type. Only genuine JPG and PNG images are allowed." });
+        }
+      } catch (validationError) {
+        // Clean up uploaded file on validation error
+        if (fs.existsSync(req.file.path)) {
+          fs.unlinkSync(req.file.path);
+        }
+        return res.status(400).json({ message: "File validation failed" });
       }
 
       const scanData = {
