@@ -8,6 +8,7 @@ interface UploadedFile {
   size: number;
   status: "uploading" | "uploaded" | "error";
   id?: string;
+  uploadedFilename?: string; // The actual filename saved on server
 }
 
 export function useFileUpload() {
@@ -26,13 +27,13 @@ export function useFileUpload() {
       setUploadedFiles(prev => 
         prev.map(f => 
           f.name === file.name 
-            ? { ...f, status: "uploaded" as const, id: data.id }
+            ? { ...f, status: "uploaded" as const, id: data.id, uploadedFilename: data.filename }
             : f
         )
       );
       toast({
         title: "Upload successful",
-        description: `${file.name} has been uploaded and is being processed.`,
+        description: `${file.name} has been uploaded successfully. Click 'Process' to start analysis.`,
       });
     },
     onError: (error, file) => {

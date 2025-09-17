@@ -62,6 +62,11 @@ export default function UploadArea() {
                   <p className="text-sm font-medium text-foreground" data-testid={`file-name-${index}`}>
                     {file.name}
                   </p>
+                  {file.uploadedFilename && (
+                    <p className="text-xs text-green-600 dark:text-green-400" data-testid={`uploaded-filename-${index}`}>
+                      Saved as: {file.uploadedFilename}
+                    </p>
+                  )}
                   <p className="text-xs text-muted-foreground" data-testid={`file-status-${index}`}>
                     {(file.size / (1024 * 1024)).toFixed(1)} MB • {file.status}
                   </p>
@@ -93,7 +98,7 @@ export default function UploadArea() {
         <div className="text-center">
           <div className="inline-flex items-center space-x-2 text-sm text-primary">
             <div className="animate-spin rounded-full h-4 w-4 border-b border-primary" />
-            <span>Processing uploads...</span>
+            <span>Uploading files...</span>
           </div>
         </div>
       )}
