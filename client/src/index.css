@@ -1,0 +1,140 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(218, 50%, 98%);
+  --foreground: hsl(218, 15%, 15%);
+  --card: hsl(0, 0%, 100%);
+  --card-foreground: hsl(218, 15%, 15%);
+  --popover: hsl(0, 0%, 100%);
+  --popover-foreground: hsl(218, 15%, 15%);
+  --primary: hsl(220, 84%, 58%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(155, 73%, 42%);
+  --secondary-foreground: hsl(0, 0%, 100%);
+  --muted: hsl(218, 25%, 95%);
+  --muted-foreground: hsl(218, 10%, 45%);
+  --accent: hsl(0, 74%, 50%);
+  --accent-foreground: hsl(0, 0%, 100%);
+  --destructive: hsl(0, 74%, 50%);
+  --destructive-foreground: hsl(0, 0%, 100%);
+  --border: hsl(218, 15%, 88%);
+  --input: hsl(218, 15%, 88%);
+  --ring: hsl(220, 84%, 58%);
+  --chart-1: hsl(220, 84%, 58%);
+  --chart-2: hsl(155, 73%, 42%);
+  --chart-3: hsl(42, 93%, 56%);
+  --chart-4: hsl(147, 79%, 42%);
+  --chart-5: hsl(341, 75%, 51%);
+  --sidebar: hsl(0, 0%, 100%);
+  --sidebar-foreground: hsl(218, 15%, 15%);
+  --sidebar-primary: hsl(220, 84%, 58%);
+  --sidebar-primary-foreground: hsl(0, 0%, 100%);
+  --sidebar-accent: hsl(218, 25%, 95%);
+  --sidebar-accent-foreground: hsl(220, 84%, 58%);
+  --sidebar-border: hsl(218, 15%, 88%);
+  --sidebar-ring: hsl(220, 84%, 58%);
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-serif: Georgia, serif;
+  --font-mono: Menlo, monospace;
+  --radius: 0.5rem;
+}
+
+.dark {
+  --background: hsl(218, 25%, 8%);
+  --foreground: hsl(218, 10%, 88%);
+  --card: hsl(218, 20%, 12%);
+  --card-foreground: hsl(218, 10%, 88%);
+  --popover: hsl(218, 20%, 12%);
+  --popover-foreground: hsl(218, 10%, 88%);
+  --primary: hsl(220, 84%, 62%);
+  --primary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(155, 73%, 45%);
+  --secondary-foreground: hsl(0, 0%, 100%);
+  --muted: hsl(218, 15%, 15%);
+  --muted-foreground: hsl(218, 10%, 55%);
+  --accent: hsl(0, 74%, 55%);
+  --accent-foreground: hsl(0, 0%, 100%);
+  --destructive: hsl(0, 74%, 55%);
+  --destructive-foreground: hsl(0, 0%, 100%);
+  --border: hsl(218, 15%, 25%);
+  --input: hsl(218, 15%, 25%);
+  --ring: hsl(220, 84%, 62%);
+  --chart-1: hsl(220, 84%, 62%);
+  --chart-2: hsl(155, 73%, 45%);
+  --chart-3: hsl(42, 93%, 56%);
+  --chart-4: hsl(147, 79%, 42%);
+  --chart-5: hsl(341, 75%, 51%);
+  --sidebar: hsl(218, 20%, 12%);
+  --sidebar-foreground: hsl(218, 10%, 88%);
+  --sidebar-primary: hsl(220, 84%, 62%);
+  --sidebar-primary-foreground: hsl(0, 0%, 100%);
+  --sidebar-accent: hsl(218, 15%, 15%);
+  --sidebar-accent-foreground: hsl(220, 84%, 62%);
+  --sidebar-border: hsl(218, 15%, 25%);
+  --sidebar-ring: hsl(220, 84%, 62%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}
+
+@layer components {
+  .accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+  }
+
+  .accordion-content.active {
+    max-height: 2000px;
+    transition: max-height 0.5s ease-in;
+  }
+
+  .progress-bar {
+    transition: width 0.3s ease;
+  }
+
+  .detection-overlay {
+    position: absolute;
+    border: 2px solid hsl(var(--accent));
+    background: hsl(var(--accent) / 0.1);
+    pointer-events: none;
+  }
+
+  .metric-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    background: hsl(var(--muted));
+    border-radius: 3px;
+    outline: none;
+  }
+
+  .metric-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: hsl(var(--primary));
+    cursor: pointer;
+    border-radius: 50%;
+  }
+
+  .metric-slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: hsl(var(--primary));
+    cursor: pointer;
+    border-radius: 50%;
+    border: none;
+  }
+}
