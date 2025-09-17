@@ -11,10 +11,17 @@ export function useScans() {
 
 // Hook to fetch specific scan
 export function useScan(scanId?: string) {
-  return useQuery<MriScan>({
+  const result = useQuery<MriScan>({
     queryKey: ['/api/scans', scanId],
     enabled: !!scanId,
+    refetchInterval: (data) => {
+      // Auto-poll every 2 seconds while processing, otherwise no polling
+      return data?.processingStatus === 'processing' ? 2000 : false;
+    },
+    refetchIntervalInBackground: true,
   });
+
+  return result;
 }
 
 // Hook to fetch analysis report for a scan
