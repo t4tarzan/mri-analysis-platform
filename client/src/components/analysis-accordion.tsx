@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCurrentScan, useScan, useRunDetection, useGenerateReport, useStart3DConversion } from "@/hooks/use-scan-data";
+import ConversionProgress from "@/components/conversion-progress";
 
 interface AnalysisAccordionProps {
   onStepChange: (step: number) => void;
@@ -38,18 +39,7 @@ export default function AnalysisAccordion({ onStepChange }: AnalysisAccordionPro
   const processingStatus = currentScanData?.processingStatus || 'pending';
   const analysisCompleted = currentScanData?.analysisCompleted || false;
   
-  // Calculate conversion progress based on processing status
-  const getConversionProgress = () => {
-    switch (processingStatus) {
-      case 'pending': return 0;
-      case 'processing': return 45;
-      case 'completed': return 100;
-      case 'failed': return 0;
-      default: return 0;
-    }
-  };
-  
-  const conversionProgress = getConversionProgress();
+  // Remove old broken progress calculation - now handled by ConversionProgress component
 
   // Add test helpers that expose state setters for testing
   (window as any).testHelpers = {
@@ -103,73 +93,7 @@ export default function AnalysisAccordion({ onStepChange }: AnalysisAccordionPro
                 <UploadArea />
               </div>
               
-              <div className="space-y-4">
-                <h3 className="text-md font-medium text-foreground">3D Model Generation</h3>
-                <Card className="p-6 bg-muted/30">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-foreground">Conversion Progress</span>
-                      <span className="text-sm text-primary" data-testid="conversion-progress">{conversionProgress}%</span>
-                    </div>
-                    <div className="w-full bg-muted rounded-full h-2">
-                      <div className="bg-primary h-2 rounded-full" style={{ width: `${conversionProgress}%` }} />
-                    </div>
-                    
-                    {/* Show Start Processing button for pending scans */}
-                    {processingStatus === 'pending' && scanId && (
-                      <div className="flex justify-center pt-2">
-                        <Button 
-                          onClick={() => start3DConversion.mutate(scanId)}
-                          disabled={start3DConversion.isPending}
-                          className="w-full"
-                          data-testid="button-start-processing"
-                        >
-                          {start3DConversion.isPending ? (
-                            <>
-                              <div className="animate-spin rounded-full h-4 w-4 border-b border-white mr-2" />
-                              Starting...
-                            </>
-                          ) : (
-                            <>
-                              <span className="mr-2">⚡</span>
-                              Start 3D Processing
-                            </>
-                          )}
-                        </Button>
-                      </div>
-                    )}
-                    <div className="space-y-2 text-sm">
-                      <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Image Processing</span>
-                        {conversionProgress >= 25 ? 
-                          <span className="text-secondary">✓</span> : 
-                          conversionProgress > 0 ? 
-                            <div className="animate-spin rounded-full h-3 w-3 border-b border-primary" /> :
-                            <span className="text-muted-foreground">⏰</span>
-                        }
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Mesh Generation</span>
-                        {conversionProgress >= 70 ? 
-                          <span className="text-secondary">✓</span> : 
-                          conversionProgress > 25 ? 
-                            <div className="animate-spin rounded-full h-3 w-3 border-b border-primary" /> :
-                            <span className="text-muted-foreground">⏰</span>
-                        }
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-muted-foreground">Texture Mapping</span>
-                        {conversionProgress >= 100 ? 
-                          <span className="text-secondary">✓</span> : 
-                          conversionProgress > 70 ? 
-                            <div className="animate-spin rounded-full h-3 w-3 border-b border-primary" /> :
-                            <span className="text-muted-foreground">⏰</span>
-                        }
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              </div>
+              <ConversionProgress />
             </div>
             
             <div className="space-y-4">

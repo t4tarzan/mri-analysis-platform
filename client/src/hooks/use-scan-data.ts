@@ -14,8 +14,9 @@ export function useScan(scanId?: string) {
   const result = useQuery<MriScan>({
     queryKey: ['/api/scans', scanId],
     enabled: !!scanId,
-    refetchInterval: (data) => {
+    refetchInterval: (query) => {
       // Auto-poll every 2 seconds while processing, otherwise no polling
+      const data = query.state.data;
       return data?.processingStatus === 'processing' ? 2000 : false;
     },
     refetchIntervalInBackground: true,
