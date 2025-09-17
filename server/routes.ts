@@ -97,7 +97,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const scan = await storage.createMriScan(scanData);
         
         // Start processing simulation
-        setTimeout(() => processImageToModel(scan.id), 1000);
+        setTimeout(() => processImageToModel(scan.id, `/uploads/test-${scan.id}.png`), 1000);
 
         res.status(201).json(scan);
       } catch (error) {
