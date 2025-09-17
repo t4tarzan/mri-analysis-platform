@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useCurrentScan, useScan, useRunDetection, useGenerateReport } from "@/hooks/use-scan-data";
 
 interface AnalysisAccordionProps {
   onStepChange: (step: number) => void;
@@ -21,6 +22,33 @@ export default function AnalysisAccordion({ onStepChange }: AnalysisAccordionPro
   const [detailLevel, setDetailLevel] = useState([4]);
   const [riskThreshold, setRiskThreshold] = useState([7]);
   const [vizComplexity, setVizComplexity] = useState([2]);
+  
+  // Get current scan data
+  const { scan, scanId } = useCurrentScan();
+  const { data: fullScan } = useScan(scanId);
+  const runDetection = useRunDetection();
+  const generateReport = useGenerateReport();
+  
+  // Calculate dynamic values from scan data
+  const currentScanData = fullScan || scan;
+  const detections = currentScanData?.detections || [];
+  const aneurysmsCount = detections.filter(d => d.type === 'aneurysm').length;
+  const totalDetections = detections.length;
+  const processingStatus = currentScanData?.processingStatus || 'pending';
+  const analysisCompleted = currentScanData?.analysisCompleted || false;
+  
+  // Calculate conversion progress based on processing status
+  const getConversionProgress = () => {
+    switch (processingStatus) {
+      case 'pending': return 0;
+      case 'processing': return 45;
+      case 'completed': return 100;
+      case 'failed': return 0;
+      default: return 0;
+    }
+  };
+  
+  const conversionProgress = getConversionProgress();
 
   // Add test helpers that expose state setters for testing
   (window as any).testHelpers = {
@@ -80,23 +108,38 @@ export default function AnalysisAccordion({ onStepChange }: AnalysisAccordionPro
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-foreground">Conversion Progress</span>
-                      <span className="text-sm text-primary" data-testid="conversion-progress">78%</span>
+                      <span className="text-sm text-primary" data-testid="conversion-progress">{conversionProgress}%</span>
                     </div>
                     <div className="w-full bg-muted rounded-full h-2">
-                      <div className="bg-primary h-2 rounded-full" style={{ width: "78%" }} />
+                      <div className="bg-primary h-2 rounded-full" style={{ width: `${conversionProgress}%` }} />
                     </div>
                     <div className="space-y-2 text-sm">
                       <div className="flex items-center justify-between">
                         <span className="text-muted-foreground">Image Processing</span>
-                        <span className="text-secondary">✓</span>
+                        {conversionProgress >= 25 ? 
+                          <span className="text-secondary">✓</span> : 
+                          conversionProgress > 0 ? 
+                            <div className="animate-spin rounded-full h-3 w-3 border-b border-primary" /> :
+                            <span className="text-muted-foreground">⏰</span>
+                        }
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-muted-foreground">Mesh Generation</span>
-                        <div className="animate-spin rounded-full h-3 w-3 border-b border-primary" />
+                        {conversionProgress >= 70 ? 
+                          <span className="text-secondary">✓</span> : 
+                          conversionProgress > 25 ? 
+                            <div className="animate-spin rounded-full h-3 w-3 border-b border-primary" /> :
+                            <span className="text-muted-foreground">⏰</span>
+                        }
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-muted-foreground">Texture Mapping</span>
-                        <span className="text-muted-foreground">⏰</span>
+                        {conversionProgress >= 100 ? 
+                          <span className="text-secondary">✓</span> : 
+                          conversionProgress > 70 ? 
+                            <div className="animate-spin rounded-full h-3 w-3 border-b border-primary" /> :
+                            <span className="text-muted-foreground">⏰</span>
+                        }
                       </div>
                     </div>
                   </div>
@@ -220,9 +263,20 @@ export default function AnalysisAccordion({ onStepChange }: AnalysisAccordionPro
                   <Button 
                     className="w-full"
                     data-testid="button-run-detection"
+                    onClick={async () => {
+                      if (scanId) {
+                        await runDetection.mutateAsync({
+                          scanId,
+                          sensitivity: sensitivity[0],
+                          confidence: confidence[0],
+                          detectionType
+                        });
+                      }
+                    }}
+                    disabled={!scanId || runDetection.isPending}
                   >
                     <span className="mr-2">▶</span>
-                    Run Detection
+                    {runDetection.isPending ? 'Running...' : 'Run Detection'}
                   </Button>
                 </div>
               </div>
@@ -237,7 +291,7 @@ export default function AnalysisAccordion({ onStepChange }: AnalysisAccordionPro
                       <span className="text-sm font-medium text-foreground">Detected Aneurysms</span>
                       <span className="text-accent">⚠</span>
                     </div>
-                    <p className="text-2xl font-bold text-accent" data-testid="detected-aneurysms">2</p>
+                    <p className="text-2xl font-bold text-accent" data-testid="detected-aneurysms">{aneurysmsCount}</p>
                     <p className="text-xs text-muted-foreground">High priority findings</p>
                   </Card>
                   
@@ -246,7 +300,7 @@ export default function AnalysisAccordion({ onStepChange }: AnalysisAccordionPro
                       <span className="text-sm font-medium text-foreground">Total Detections</span>
                       <span className="text-secondary">🔍</span>
                     </div>
-                    <p className="text-2xl font-bold text-secondary" data-testid="total-detections">5</p>
+                    <p className="text-2xl font-bold text-secondary" data-testid="total-detections">{totalDetections}</p>
                     <p className="text-xs text-muted-foreground">All anomalies found</p>
                   </Card>
                 </div>
@@ -393,6 +447,27 @@ export default function AnalysisAccordion({ onStepChange }: AnalysisAccordionPro
                     </Select>
                   </div>
                 </div>
+              </div>
+              
+              <div className="flex justify-center mt-6">
+                <Button 
+                  className="w-full lg:w-auto px-8"
+                  data-testid="button-generate-report"
+                  onClick={async () => {
+                    if (scanId) {
+                      await generateReport.mutateAsync({
+                        scanId,
+                        detailLevel: detailLevel[0],
+                        riskThreshold: riskThreshold[0],
+                        vizComplexity: vizComplexity[0]
+                      });
+                    }
+                  }}
+                  disabled={!scanId || generateReport.isPending}
+                >
+                  <span className="mr-2">📊</span>
+                  {generateReport.isPending ? 'Generating...' : 'Generate Analysis Report'}
+                </Button>
               </div>
             </Card>
           </CardContent>
