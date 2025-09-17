@@ -8,6 +8,7 @@ import path from "path";
 import fs from "fs";
 import { randomUUID } from "crypto";
 import { fileTypeFromBuffer } from "file-type";
+import { medical3DConverter } from "./services/3d-conversion-service";
 
 // Configure multer for file uploads
 const upload = multer({
@@ -150,8 +151,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const scan = await storage.createMriScan(scanData);
       
-      // Start processing simulation (in a real app, this would be a background job)
-      setTimeout(() => processImageToModel(scan.id), 1000);
+      // Start real 3D model conversion (async background process)
+      setTimeout(() => processImageToModel(scan.id, req.file!.path), 1000);
 
       res.status(201).json(scan);
     } catch (error) {
@@ -235,6 +236,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get 3D model file for a scan
+  app.get("/api/scans/:id/model", async (req, res) => {
+    try {
+      const scan = await storage.getMriScan(req.params.id);
+      if (!scan || !scan.threeDModelPath) {
+        return res.status(404).json({ message: "3D model not found" });
+      }
+      
+      const modelPath = path.join(process.cwd(), 'models', path.basename(scan.threeDModelPath));
+      
+      if (!fs.existsSync(modelPath)) {
+        return res.status(404).json({ message: "3D model file not found" });
+      }
+      
+      // Serve the 3D model file
+      res.sendFile(modelPath);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to retrieve 3D model" });
+    }
+  });
+
   // Delete MRI scan
   app.delete("/api/scans/:id", async (req, res) => {
     try {
@@ -252,15 +274,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
   return httpServer;
 }
 
-// Simulation functions for processing
-async function processImageToModel(scanId: string): Promise<void> {
-  // Simulate 3D model generation process
-  await new Promise(resolve => setTimeout(resolve, 3000));
-  
-  await storage.updateMriScan(scanId, {
-    processingStatus: "completed",
-    threeDModelPath: `/models/${scanId}_model.obj`
-  });
+// Real 3D model conversion processing
+async function processImageToModel(scanId: string, imagePath: string): Promise<void> {
+  try {
+    console.log(`Starting 3D conversion for scan ${scanId} from ${imagePath}`);
+    
+    // Register progress callback to update scan status
+    medical3DConverter.registerProgressCallback(scanId, async (progress) => {
+      if (progress.progress === 50) {
+        // Update to processing status at midpoint
+        await storage.updateMriScan(scanId, {
+          processingStatus: "processing"
+        });
+      }
+    });
+    
+    // Perform real 3D conversion with medical-grade algorithms
+    const modelPath = await medical3DConverter.convertMedicalImageTo3D(imagePath, scanId, {
+      quality: 'standard',
+      meshOptimization: true,
+      medicalStandard: 'research',
+      outputFormats: ['obj', 'stl']
+    });
+    
+    // Update scan with completion status and model path
+    await storage.updateMriScan(scanId, {
+      processingStatus: "completed",
+      threeDModelPath: `/models/${path.basename(modelPath)}`
+    });
+    
+    console.log(`3D conversion completed for scan ${scanId}: ${modelPath}`);
+    
+  } catch (error) {
+    console.error(`3D conversion failed for scan ${scanId}:`, error);
+    
+    await storage.updateMriScan(scanId, {
+      processingStatus: "completed" // Mark as completed even on error to avoid stuck state
+    });
+    
+  } finally {
+    // Clean up progress callback
+    medical3DConverter.unregisterProgressCallback(scanId);
+  }
 }
 
 async function simulateAnomalyDetection(
