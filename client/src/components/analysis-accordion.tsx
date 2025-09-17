@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useCurrentScan, useScan, useRunDetection, useGenerateReport } from "@/hooks/use-scan-data";
+import { useCurrentScan, useScan, useRunDetection, useGenerateReport, useStart3DConversion } from "@/hooks/use-scan-data";
 
 interface AnalysisAccordionProps {
   onStepChange: (step: number) => void;
@@ -28,6 +28,7 @@ export default function AnalysisAccordion({ onStepChange }: AnalysisAccordionPro
   const { data: fullScan } = useScan(scanId);
   const runDetection = useRunDetection();
   const generateReport = useGenerateReport();
+  const start3DConversion = useStart3DConversion();
   
   // Calculate dynamic values from scan data
   const currentScanData = fullScan || scan;
@@ -113,6 +114,30 @@ export default function AnalysisAccordion({ onStepChange }: AnalysisAccordionPro
                     <div className="w-full bg-muted rounded-full h-2">
                       <div className="bg-primary h-2 rounded-full" style={{ width: `${conversionProgress}%` }} />
                     </div>
+                    
+                    {/* Show Start Processing button for pending scans */}
+                    {processingStatus === 'pending' && scanId && (
+                      <div className="flex justify-center pt-2">
+                        <Button 
+                          onClick={() => start3DConversion.mutate(scanId)}
+                          disabled={start3DConversion.isPending}
+                          className="w-full"
+                          data-testid="button-start-processing"
+                        >
+                          {start3DConversion.isPending ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b border-white mr-2" />
+                              Starting...
+                            </>
+                          ) : (
+                            <>
+                              <span className="mr-2">⚡</span>
+                              Start 3D Processing
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    )}
                     <div className="space-y-2 text-sm">
                       <div className="flex items-center justify-between">
                         <span className="text-muted-foreground">Image Processing</span>

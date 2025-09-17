@@ -71,6 +71,21 @@ export function useGenerateReport() {
   });
 }
 
+// Hook to start 3D model conversion manually
+export function useStart3DConversion() {
+  return useMutation({
+    mutationFn: async (scanId: string) => {
+      const response = await apiRequest('POST', `/api/scans/${scanId}/convert`);
+      return response.json();
+    },
+    onSuccess: (data, scanId) => {
+      // Invalidate scan data to trigger refetch and show updated processing status
+      queryClient.invalidateQueries({ queryKey: ['/api/scans', scanId] });
+      queryClient.invalidateQueries({ queryKey: ['/api/scans'] });
+    },
+  });
+}
+
 // Helper hook to get the most recent scan
 export function useCurrentScan() {
   const { data: scans } = useScans();

@@ -175,13 +175,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const scan = await storage.createMriScan(scanData);
       
-      // Start real 3D model conversion (async background process)
-      setTimeout(() => processImageToModel(scan.id, req.file!.path), 1000);
-
+      // Don't start processing immediately - let user trigger it manually
+      // This prevents upload failures and gives better UX control
+      
       res.status(201).json(scan);
     } catch (error) {
       console.error("Upload error:", error);
       res.status(500).json({ message: "Failed to upload scan" });
+    }
+  });
+
+  // Start 3D model conversion manually (user-triggered)
+  app.post("/api/scans/:id/convert", async (req, res) => {
+    try {
+      const scan = await storage.getMriScan(req.params.id);
+      if (!scan) {
+        return res.status(404).json({ message: "Scan not found" });
+      }
+
+      if (scan.processingStatus === "processing" || scan.processingStatus === "completed") {
+        return res.status(400).json({ message: "Scan is already being processed or completed" });
+      }
+
+      // Update scan status to processing
+      await storage.updateMriScan(req.params.id, {
+        processingStatus: "processing"
+      });
+
+      // Start 3D model conversion (async background process)
+      const uploadPath = `uploads/${scan.filename}`;
+      setTimeout(() => processImageToModel(scan.id, uploadPath), 1000);
+
+      const updatedScan = await storage.getMriScan(req.params.id);
+      res.json(updatedScan);
+    } catch (error) {
+      console.error("3D conversion start error:", error);
+      res.status(500).json({ message: "Failed to start 3D conversion" });
     }
   });
 
