@@ -63,7 +63,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Upload MRI scan files
   app.post("/api/scans/upload", upload.single('mriFile'), async (req, res) => {
     try {
+      console.log('Upload request received. Files:', req.files);
+      console.log('Upload request file:', req.file);
+      console.log('Upload request body keys:', Object.keys(req.body || {}));
+      console.log('Upload request headers content-type:', req.headers['content-type']);
+      
       if (!req.file) {
+        console.error('No file in req.file, returning 400');
         return res.status(400).json({ message: "No file uploaded" });
       }
 
