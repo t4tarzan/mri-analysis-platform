@@ -22,6 +22,16 @@ export default function AnalysisAccordion({ onStepChange }: AnalysisAccordionPro
   const [riskThreshold, setRiskThreshold] = useState([7]);
   const [vizComplexity, setVizComplexity] = useState([2]);
 
+  // Add test helpers that expose state setters for testing
+  (window as any).testHelpers = {
+    setSensitivity: (value: number) => setSensitivity([value]),
+    setConfidence: (value: number) => setConfidence([value]),
+    setDetectionType: (value: string) => setDetectionType(value),
+    setDetailLevel: (value: number) => setDetailLevel([value]),
+    setRiskThreshold: (value: number) => setRiskThreshold([value]),
+    setVizComplexity: (value: number) => setVizComplexity([value])
+  };
+
   const toggleAccordion = (section: number) => {
     setActiveAccordion(section);
     onStepChange(section);
