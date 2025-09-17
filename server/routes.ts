@@ -121,13 +121,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Enhanced content-based file validation for medical platform security
+      // Use multiple validation layers with fallback for browser-generated files
       try {
         const fileBuffer = fs.readFileSync(req.file.path);
         const fileType = await fileTypeFromBuffer(fileBuffer);
         
-        if (!fileType || !['image/jpeg', 'image/png'].includes(fileType.mime)) {
+        // Primary validation: Check detected file type
+        let isValidImage = false;
+        if (fileType && ['image/jpeg', 'image/png'].includes(fileType.mime)) {
+          isValidImage = true;
+        }
+        
+        // Fallback validation: Use MIME type from multer if fileTypeFromBuffer fails
+        // This handles browser-generated files that may not have perfect magic bytes
+        if (!isValidImage && ['image/jpeg', 'image/png'].includes(req.file.mimetype)) {
+          const allowedExtensions = ['.jpg', '.jpeg', '.png'];
+          const ext = path.extname(req.file.originalname).toLowerCase();
+          if (allowedExtensions.includes(ext)) {
+            isValidImage = true;
+            if (process.env.NODE_ENV === 'development') {
+              console.log(`File validation: Using fallback validation for ${req.file.originalname}`);
+            }
+          }
+        }
+        
+        if (!isValidImage) {
           // Delete the uploaded file if validation fails
           fs.unlinkSync(req.file.path);
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`File validation failed: ${req.file.originalname}, detected type: ${fileType?.mime}, mime: ${req.file.mimetype}`);
+          }
           return res.status(400).json({ message: "Invalid file type. Only genuine JPG and PNG images are allowed." });
         }
       } catch (validationError) {
@@ -135,6 +158,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (fs.existsSync(req.file.path)) {
           fs.unlinkSync(req.file.path);
         }
+        console.error("File validation error:", validationError);
         return res.status(400).json({ message: "File validation failed" });
       }
 
