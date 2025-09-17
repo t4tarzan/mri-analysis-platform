@@ -4,9 +4,11 @@ import { Upload, CheckCircle, X, FileImage } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useFileUpload } from "@/hooks/use-file-upload";
+import { useStart3DConversion } from "@/hooks/use-scan-data";
 
 export default function UploadArea() {
   const { uploadedFiles, uploadFile, removeFile, isUploading } = useFileUpload();
+  const start3DConversion = useStart3DConversion();
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     acceptedFiles.forEach(file => {
@@ -23,6 +25,18 @@ export default function UploadArea() {
     maxSize: 50 * 1024 * 1024, // 50MB
     multiple: true
   });
+
+  // Check if we have any successfully uploaded files
+  const uploadedFileIds = uploadedFiles.filter(f => f.status === "uploaded" && f.id).map(f => f.id!);
+  const hasUploadedFiles = uploadedFileIds.length > 0;
+  const isProcessButtonDisabled = !hasUploadedFiles || isUploading || start3DConversion.isPending;
+
+  const handleProcessFiles = () => {
+    if (uploadedFileIds.length > 0) {
+      // Process the first uploaded file
+      start3DConversion.mutate(uploadedFileIds[0]);
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -94,14 +108,38 @@ export default function UploadArea() {
         </div>
       )}
 
-      {isUploading && (
-        <div className="text-center">
-          <div className="inline-flex items-center space-x-2 text-sm text-primary">
-            <div className="animate-spin rounded-full h-4 w-4 border-b border-primary" />
-            <span>Uploading files...</span>
-          </div>
-        </div>
-      )}
+      {/* Process Button */}
+      <div className="flex justify-center pt-2">
+        <Button 
+          onClick={handleProcessFiles}
+          disabled={isProcessButtonDisabled}
+          className="w-full"
+          data-testid="button-process-files"
+          variant={hasUploadedFiles ? "default" : "secondary"}
+        >
+          {isUploading ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b border-white mr-2" />
+              Uploading...
+            </>
+          ) : start3DConversion.isPending ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b border-white mr-2" />
+              Processing...
+            </>
+          ) : hasUploadedFiles ? (
+            <>
+              <span className="mr-2">⚡</span>
+              Process Files
+            </>
+          ) : (
+            <>
+              <span className="mr-2 opacity-50">⚡</span>
+              Process Files
+            </>
+          )}
+        </Button>
+      </div>
     </div>
   );
 }
