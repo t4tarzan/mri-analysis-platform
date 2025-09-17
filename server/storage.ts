@@ -1,5 +1,7 @@
-import { type MriScan, type InsertMriScan, type AnalysisReport, type InsertAnalysisReport, Detection, CriticalFinding, SecondaryFinding, TechnicalSummary } from "@shared/schema";
+import { type MriScan, type InsertMriScan, type AnalysisReport, type InsertAnalysisReport, Detection, CriticalFinding, SecondaryFinding, TechnicalSummary, mriScans, analysisReports } from "@shared/schema";
 import { randomUUID } from "crypto";
+import { db } from "./db";
+import { eq, desc } from "drizzle-orm";
 
 export interface IStorage {
   // MRI Scans
@@ -14,87 +16,75 @@ export interface IStorage {
   createAnalysisReport(report: InsertAnalysisReport): Promise<AnalysisReport>;
 }
 
-export class MemStorage implements IStorage {
-  private mriScans: Map<string, MriScan>;
-  private analysisReports: Map<string, AnalysisReport>;
-
-  constructor() {
-    this.mriScans = new Map();
-    this.analysisReports = new Map();
-  }
-
+export class DatabaseStorage implements IStorage {
   async getMriScan(id: string): Promise<MriScan | undefined> {
-    return this.mriScans.get(id);
+    const [scan] = await db.select().from(mriScans).where(eq(mriScans.id, id));
+    return scan || undefined;
   }
 
   async getAllMriScans(): Promise<MriScan[]> {
-    return Array.from(this.mriScans.values()).sort(
-      (a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime()
-    );
+    return await db.select().from(mriScans).orderBy(desc(mriScans.uploadedAt));
   }
 
   async createMriScan(insertScan: InsertMriScan): Promise<MriScan> {
-    const id = randomUUID();
-    const scan: MriScan = {
-      ...insertScan,
-      id,
-      uploadedAt: new Date(),
-      processingStatus: "pending",
-      threeDModelPath: null,
-      detections: [],
-      analysisCompleted: false,
-    };
-    this.mriScans.set(id, scan);
+    const [scan] = await db
+      .insert(mriScans)
+      .values({
+        filename: insertScan.filename,
+        originalName: insertScan.originalName,
+        fileSize: insertScan.fileSize,
+        mimeType: insertScan.mimeType,
+        processingStatus: insertScan.processingStatus || "pending",
+        threeDModelPath: insertScan.threeDModelPath || null,
+        detections: (insertScan.detections || []) as any,
+        analysisCompleted: insertScan.analysisCompleted || false
+      })
+      .returning();
     return scan;
   }
 
   async updateMriScan(id: string, updates: Partial<MriScan>): Promise<MriScan | undefined> {
-    const existing = this.mriScans.get(id);
-    if (!existing) return undefined;
-    
-    const updated = { ...existing, ...updates };
-    this.mriScans.set(id, updated);
-    return updated;
+    const [updated] = await db
+      .update(mriScans)
+      .set(updates)
+      .where(eq(mriScans.id, id))
+      .returning();
+    return updated || undefined;
   }
 
   async deleteMriScan(id: string): Promise<boolean> {
-    const deleted = this.mriScans.delete(id);
-    // Also delete associated analysis report
-    for (const [reportId, report] of Array.from(this.analysisReports.entries())) {
-      if (report.scanId === id) {
-        this.analysisReports.delete(reportId);
-        break;
-      }
-    }
-    return deleted;
+    // First delete associated analysis reports
+    await db.delete(analysisReports).where(eq(analysisReports.scanId, id));
+    
+    // Then delete the scan
+    const result = await db.delete(mriScans).where(eq(mriScans.id, id));
+    return (result.rowCount || 0) > 0;
   }
 
   async getAnalysisReport(scanId: string): Promise<AnalysisReport | undefined> {
-    for (const report of Array.from(this.analysisReports.values())) {
-      if (report.scanId === scanId) {
-        return report;
-      }
-    }
-    return undefined;
+    const [report] = await db
+      .select()
+      .from(analysisReports)
+      .where(eq(analysisReports.scanId, scanId));
+    return report || undefined;
   }
 
   async createAnalysisReport(insertReport: InsertAnalysisReport): Promise<AnalysisReport> {
-    const id = randomUUID();
-    const report: AnalysisReport = {
-      id,
-      scanId: insertReport.scanId,
-      riskScore: insertReport.riskScore,
-      detectionAccuracy: insertReport.detectionAccuracy,
-      imageQuality: insertReport.imageQuality,
-      processingTime: insertReport.processingTime,
-      criticalFindings: (insertReport.criticalFindings as CriticalFinding[]) || [],
-      secondaryFindings: (insertReport.secondaryFindings as SecondaryFinding[]) || [],
-      technicalSummary: insertReport.technicalSummary!,
-      generatedAt: new Date(),
-    };
-    this.analysisReports.set(id, report);
+    const [report] = await db
+      .insert(analysisReports)
+      .values({
+        scanId: insertReport.scanId,
+        riskScore: insertReport.riskScore,
+        detectionAccuracy: insertReport.detectionAccuracy,
+        imageQuality: insertReport.imageQuality,
+        processingTime: insertReport.processingTime,
+        criticalFindings: (insertReport.criticalFindings || []) as any,
+        secondaryFindings: (insertReport.secondaryFindings || []) as any,
+        technicalSummary: insertReport.technicalSummary as any
+      })
+      .returning();
     return report;
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
