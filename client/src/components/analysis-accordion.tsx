@@ -98,30 +98,23 @@ export default function AnalysisAccordion({ onStepChange }: AnalysisAccordionPro
       <Card className="p-6">
         <h2 className="text-xl font-semibold mb-4">Step 1: Upload MRI Files</h2>
         
-        <Card
-          {...getRootProps()}
-          className={`border-2 border-dashed p-8 text-center cursor-pointer transition-colors mb-4 ${
-            isDragActive 
-              ? "border-primary/50 bg-primary/5" 
-              : "border-border hover:border-primary/50"
-          }`}
-          data-testid="upload-dropzone"
-        >
-          <input {...getInputProps()} />
-          <div className="mx-auto w-12 h-12 bg-muted rounded-full flex items-center justify-center mb-4">
-            <Upload className="text-muted-foreground h-6 w-6" />
+        <div className="flex items-center gap-4">
+          <Button
+            {...getRootProps()}
+            variant="outline"
+            className={`flex items-center gap-2 ${
+              isDragActive ? "border-primary bg-primary/5" : ""
+            }`}
+            data-testid="upload-dropzone"
+          >
+            <input {...getInputProps()} />
+            <Upload className="h-4 w-4" />
+            {isDragActive ? "Drop files here" : "Upload MRI Files"}
+          </Button>
+          <div className="text-sm text-muted-foreground">
+            JPG, PNG • Max 50MB per file
           </div>
-          <p className="text-lg font-medium text-foreground mb-2">
-            {isDragActive ? "Drop MRI files here" : "Drop MRI files here"}
-          </p>
-          <p className="text-sm text-muted-foreground mb-4">
-            or click to browse files
-          </p>
-          <div className="flex items-center justify-center space-x-2 text-xs text-muted-foreground">
-            <span>ℹ️</span>
-            <span>Supports JPG, PNG formats • Max 50MB per file</span>
-          </div>
-        </Card>
+        </div>
 
         {/* Uploaded Files Preview */}
         {uploadedFiles.length > 0 && (

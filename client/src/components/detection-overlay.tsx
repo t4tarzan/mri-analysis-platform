@@ -53,12 +53,12 @@ export default function DetectionOverlay() {
       ))}
       
       {/* Detection Labels */}
-      <div className="absolute top-6 left-6 space-y-2">
+      <div className="absolute top-4 left-4 space-y-3">
         {detections.map((detection, index) => (
           <div
             key={detection.id}
-            className="bg-accent text-accent-foreground px-2 py-1 rounded text-xs font-medium"
-            style={{ top: `${index * 24}px` }}
+            className="bg-black/80 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg backdrop-blur-sm border border-white/20"
+            style={{ top: `${index * 40}px` }}
             data-testid={`detection-label-${detection.id}`}
           >
             {detection.label}
