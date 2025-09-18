@@ -4,137 +4,224 @@
 @tailwind utilities;
 
 :root {
-  --background: hsl(218, 50%, 98%);
-  --foreground: hsl(218, 15%, 15%);
-  --card: hsl(0, 0%, 100%);
-  --card-foreground: hsl(218, 15%, 15%);
-  --popover: hsl(0, 0%, 100%);
-  --popover-foreground: hsl(218, 15%, 15%);
-  --primary: hsl(220, 84%, 58%);
+  /* Professional Medical Dark Theme */
+  --background: hsl(215, 28%, 8%);  /* Dark slate background */
+  --foreground: hsl(0, 0%, 95%);    /* High contrast white text */
+  --card: hsl(215, 25%, 10%);       /* Slightly lighter card background */
+  --card-foreground: hsl(0, 0%, 95%);
+  --popover: hsl(215, 25%, 10%);
+  --popover-foreground: hsl(0, 0%, 95%);
+  --primary: hsl(187, 100%, 42%);   /* Bright cyan blue for primary actions */
   --primary-foreground: hsl(0, 0%, 100%);
-  --secondary: hsl(155, 73%, 42%);
-  --secondary-foreground: hsl(0, 0%, 100%);
-  --muted: hsl(218, 25%, 95%);
-  --muted-foreground: hsl(218, 10%, 45%);
-  --accent: hsl(0, 74%, 50%);
+  --secondary: hsl(215, 20%, 15%);  /* Muted secondary elements */
+  --secondary-foreground: hsl(0, 0%, 85%);
+  --muted: hsl(215, 20%, 12%);      /* Subtle muted backgrounds */
+  --muted-foreground: hsl(215, 10%, 60%);
+  --accent: hsl(0, 72%, 58%);       /* Red for alerts/critical findings */
   --accent-foreground: hsl(0, 0%, 100%);
-  --destructive: hsl(0, 74%, 50%);
+  --destructive: hsl(0, 84%, 60%);
   --destructive-foreground: hsl(0, 0%, 100%);
-  --border: hsl(218, 15%, 88%);
-  --input: hsl(218, 15%, 88%);
-  --ring: hsl(220, 84%, 58%);
-  --chart-1: hsl(220, 84%, 58%);
-  --chart-2: hsl(155, 73%, 42%);
-  --chart-3: hsl(42, 93%, 56%);
-  --chart-4: hsl(147, 79%, 42%);
-  --chart-5: hsl(341, 75%, 51%);
-  --sidebar: hsl(0, 0%, 100%);
-  --sidebar-foreground: hsl(218, 15%, 15%);
-  --sidebar-primary: hsl(220, 84%, 58%);
+  --border: hsl(215, 20%, 18%);     /* Subtle borders */
+  --input: hsl(215, 20%, 15%);      /* Input field backgrounds */
+  --ring: hsl(187, 100%, 42%);      /* Focus ring cyan */
+  --chart-1: hsl(0, 72%, 58%);      /* Red - Critical */
+  --chart-2: hsl(38, 92%, 50%);     /* Orange - Warning */
+  --chart-3: hsl(187, 100%, 42%);   /* Blue - Normal */
+  --chart-4: hsl(142, 71%, 45%);    /* Green - Good */
+  --chart-5: hsl(271, 81%, 56%);    /* Purple - Info */
+  --sidebar: hsl(215, 25%, 8%);
+  --sidebar-foreground: hsl(0, 0%, 95%);
+  --sidebar-primary: hsl(187, 100%, 42%);
   --sidebar-primary-foreground: hsl(0, 0%, 100%);
-  --sidebar-accent: hsl(218, 25%, 95%);
-  --sidebar-accent-foreground: hsl(220, 84%, 58%);
-  --sidebar-border: hsl(218, 15%, 88%);
-  --sidebar-ring: hsl(220, 84%, 58%);
+  --sidebar-accent: hsl(215, 20%, 12%);
+  --sidebar-accent-foreground: hsl(187, 100%, 42%);
+  --sidebar-border: hsl(215, 20%, 18%);
+  --sidebar-ring: hsl(187, 100%, 42%);
   --font-sans: "Inter", system-ui, sans-serif;
   --font-serif: Georgia, serif;
   --font-mono: Menlo, monospace;
   --radius: 0.5rem;
-}
-
-.dark {
-  --background: hsl(218, 25%, 8%);
-  --foreground: hsl(218, 10%, 88%);
-  --card: hsl(218, 20%, 12%);
-  --card-foreground: hsl(218, 10%, 88%);
-  --popover: hsl(218, 20%, 12%);
-  --popover-foreground: hsl(218, 10%, 88%);
-  --primary: hsl(220, 84%, 62%);
-  --primary-foreground: hsl(0, 0%, 100%);
-  --secondary: hsl(155, 73%, 45%);
-  --secondary-foreground: hsl(0, 0%, 100%);
-  --muted: hsl(218, 15%, 15%);
-  --muted-foreground: hsl(218, 10%, 55%);
-  --accent: hsl(0, 74%, 55%);
-  --accent-foreground: hsl(0, 0%, 100%);
-  --destructive: hsl(0, 74%, 55%);
-  --destructive-foreground: hsl(0, 0%, 100%);
-  --border: hsl(218, 15%, 25%);
-  --input: hsl(218, 15%, 25%);
-  --ring: hsl(220, 84%, 62%);
-  --chart-1: hsl(220, 84%, 62%);
-  --chart-2: hsl(155, 73%, 45%);
-  --chart-3: hsl(42, 93%, 56%);
-  --chart-4: hsl(147, 79%, 42%);
-  --chart-5: hsl(341, 75%, 51%);
-  --sidebar: hsl(218, 20%, 12%);
-  --sidebar-foreground: hsl(218, 10%, 88%);
-  --sidebar-primary: hsl(220, 84%, 62%);
-  --sidebar-primary-foreground: hsl(0, 0%, 100%);
-  --sidebar-accent: hsl(218, 15%, 15%);
-  --sidebar-accent-foreground: hsl(220, 84%, 62%);
-  --sidebar-border: hsl(218, 15%, 25%);
-  --sidebar-ring: hsl(220, 84%, 62%);
-}
-
-@layer base {
-  * {
-    @apply border-border;
-  }
   
-  body {
-    @apply bg-background text-foreground font-sans antialiased;
+  /* Medical-specific color variables */
+  --medical-risk-high: hsl(0, 72%, 58%);     /* Red for high risk */
+  --medical-risk-medium: hsl(38, 92%, 50%);  /* Orange for medium risk */
+  --medical-risk-low: hsl(187, 100%, 42%);   /* Blue for low risk/normal */
+  --medical-success: hsl(142, 71%, 45%);     /* Green for success */
+  --medical-warning: hsl(38, 92%, 50%);      /* Orange for warnings */
+}
+
+/* Apply dark theme globally */
+html {
+  @apply bg-background text-foreground;
+}
+
+body {
+  @apply bg-background text-foreground;
+  font-family: "Inter", sans-serif;
+  color: hsl(var(--foreground));
+  background: hsl(var(--background));
+}
+
+* {
+  @apply border-border;
+}
+
+/* Medical UI specific styles */
+.medical-sidebar {
+  background: linear-gradient(180deg, hsl(var(--background)) 0%, hsl(215, 25%, 6%) 100%);
+  border-right: 1px solid hsl(var(--border));
+}
+
+.medical-card {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.medical-metric-high {
+  background: linear-gradient(135deg, hsl(var(--medical-risk-high)) 0%, hsl(0, 72%, 50%) 100%);
+}
+
+.medical-metric-medium {
+  background: linear-gradient(135deg, hsl(var(--medical-risk-medium)) 0%, hsl(38, 92%, 45%) 100%);
+}
+
+.medical-metric-low {
+  background: linear-gradient(135deg, hsl(var(--medical-risk-low)) 0%, hsl(187, 100%, 38%) 100%);
+}
+
+.medical-progress-bar {
+  background: linear-gradient(90deg, hsl(var(--primary)) 0%, hsl(187, 100%, 35%) 100%);
+  box-shadow: 0 0 8px hsl(var(--primary) / 0.3);
+}
+
+/* Scan viewer enhancements */
+.scan-viewer-overlay {
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.6) 100%);
+  backdrop-filter: blur(8px);
+}
+
+.anomaly-badge {
+  background: linear-gradient(135deg, hsl(var(--medical-risk-high)) 0%, hsl(0, 72%, 50%) 100%);
+  box-shadow: 0 0 12px hsl(var(--medical-risk-high) / 0.5);
+  animation: pulse-glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes pulse-glow {
+  from {
+    box-shadow: 0 0 12px hsl(var(--medical-risk-high) / 0.5);
+  }
+  to {
+    box-shadow: 0 0 20px hsl(var(--medical-risk-high) / 0.8);
   }
 }
 
-@layer components {
-  .accordion-content {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.3s ease-out;
-  }
+/* Professional form controls */
+.medical-slider {
+  background: hsl(var(--muted));
+  border: 1px solid hsl(var(--border));
+}
 
-  .accordion-content.active {
-    max-height: 2000px;
-    transition: max-height 0.5s ease-in;
-  }
+.medical-slider::-webkit-slider-thumb {
+  background: hsl(var(--primary));
+  box-shadow: 0 0 8px hsl(var(--primary) / 0.4);
+}
 
-  .progress-bar {
-    transition: width 0.3s ease;
-  }
+.medical-toggle {
+  background: hsl(var(--muted));
+  border: 1px solid hsl(var(--border));
+  transition: all 0.2s ease;
+}
 
-  .detection-overlay {
-    position: absolute;
-    border: 2px solid hsl(var(--accent));
-    background: hsl(var(--accent) / 0.1);
-    pointer-events: none;
-  }
+.medical-toggle[data-state="checked"] {
+  background: hsl(var(--primary));
+  box-shadow: 0 0 8px hsl(var(--primary) / 0.3);
+}
 
-  .metric-slider {
-    -webkit-appearance: none;
-    appearance: none;
-    height: 6px;
-    background: hsl(var(--muted));
-    border-radius: 3px;
-    outline: none;
-  }
+/* Professional navigation */
+.medical-nav-item {
+  transition: all 0.2s ease;
+  border-radius: 0.375rem;
+}
 
-  .metric-slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 18px;
-    height: 18px;
-    background: hsl(var(--primary));
-    cursor: pointer;
-    border-radius: 50%;
-  }
+.medical-nav-item:hover {
+  background: hsl(var(--sidebar-accent));
+  color: hsl(var(--sidebar-accent-foreground));
+}
 
-  .metric-slider::-moz-range-thumb {
-    width: 18px;
-    height: 18px;
-    background: hsl(var(--primary));
-    cursor: pointer;
-    border-radius: 50%;
-    border: none;
-  }
+.medical-nav-item.active {
+  background: hsl(var(--sidebar-primary));
+  color: hsl(var(--sidebar-primary-foreground));
+  box-shadow: 0 2px 8px hsl(var(--sidebar-primary) / 0.3);
+}
+
+/* Enhanced 3D viewer */
+.medical-3d-viewer {
+  background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(215, 20%, 8%) 100%);
+  border: 1px solid hsl(var(--border));
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Patient info styling */
+.patient-info-card {
+  background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(215, 20%, 12%) 100%);
+  border: 1px solid hsl(var(--border));
+}
+
+/* Medical Color Utility Classes */
+.bg-medical-risk-high {
+  background-color: hsl(var(--medical-risk-high));
+}
+
+.bg-medical-risk-medium {
+  background-color: hsl(var(--medical-risk-medium));
+}
+
+.bg-medical-risk-low {
+  background-color: hsl(var(--medical-risk-low));
+}
+
+.bg-medical-success {
+  background-color: hsl(var(--medical-success));
+}
+
+.bg-medical-warning {
+  background-color: hsl(var(--medical-warning));
+}
+
+.text-medical-risk-high {
+  color: hsl(var(--medical-risk-high));
+}
+
+.text-medical-risk-medium {
+  color: hsl(var(--medical-risk-medium));
+}
+
+.text-medical-risk-low {
+  color: hsl(var(--medical-risk-low));
+}
+
+.text-medical-success {
+  color: hsl(var(--medical-success));
+}
+
+.text-medical-warning {
+  color: hsl(var(--medical-warning));
+}
+
+/* Professional buttons */
+.btn-medical-primary {
+  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(187, 100%, 38%) 100%);
+  box-shadow: 0 2px 8px hsl(var(--primary) / 0.3);
+  transition: all 0.2s ease;
+}
+
+.btn-medical-primary:hover {
+  box-shadow: 0 4px 12px hsl(var(--primary) / 0.4);
+  transform: translateY(-1px);
+}
+
+.btn-medical-danger {
+  background: linear-gradient(135deg, hsl(var(--medical-risk-high)) 0%, hsl(0, 72%, 50%) 100%);
+  box-shadow: 0 2px 8px hsl(var(--medical-risk-high) / 0.3);
 }
