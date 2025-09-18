@@ -237,23 +237,32 @@ export default function AnalysisAccordion({ onStepChange }: AnalysisAccordionPro
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <Card className="p-4">
-              <h3 className="text-lg font-semibold text-foreground mb-4">
-                Interactive 3D Model
-              </h3>
+          {/* Main 3D Model - Takes up 70% of screen height */}
+          <Card className="p-4 mb-6">
+            <h3 className="text-lg font-semibold text-foreground mb-4">
+              Interactive 3D Model
+            </h3>
+            <div style={{ height: '70vh' }} className="medical-3d-viewer">
               <ThreeDViewer />
-            </Card>
+            </div>
+          </Card>
 
+          {/* Detection Results and Metrics Below */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
             <Card className="p-4">
               <h3 className="text-lg font-semibold text-foreground mb-4">
                 Detection Results
               </h3>
               <DetectionOverlay />
             </Card>
+            
+            <Card className="p-4">
+              <h3 className="text-lg font-semibold text-foreground mb-4">
+                Analysis Metrics
+              </h3>
+              <MetricsDashboard />
+            </Card>
           </div>
-
-          <MetricsDashboard />
         </Card>
       )}
     </div>

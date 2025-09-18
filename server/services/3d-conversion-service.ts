@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { randomUUID } from 'crypto';
+import { ObjectStorageService } from '../objectStorage';
 
 /**
  * Server-side 3D Model Conversion Service for Medical Images
@@ -40,10 +41,12 @@ export class ServerMedical3DConverter {
   private uploadsDir: string;
   private modelsDir: string;
   private progressCallbacks: Map<string, (progress: ConversionProgress) => void> = new Map();
+  private objectStorageService: ObjectStorageService;
 
   constructor() {
     this.uploadsDir = path.join(process.cwd(), 'uploads');
     this.modelsDir = path.join(process.cwd(), 'models');
+    this.objectStorageService = new ObjectStorageService();
     this.ensureDirectories();
   }
 
@@ -80,6 +83,8 @@ export class ServerMedical3DConverter {
     scanId: string, 
     options: ProcessingOptions = this.getDefaultOptions()
   ): Promise<string> {
+    let localImagePath = imagePath;
+    let tempFileToCleanup: string | null = null;
     
     try {
       this.updateProgress(scanId, 'initialization', 0, 'Initializing medical 3D conversion pipeline...');
@@ -88,13 +93,20 @@ export class ServerMedical3DConverter {
       this.updateProgress(scanId, 'validation', 5, 'Validating medical image format...');
       await this.validateMedicalImage(imagePath);
       
+      // Stage 1.5: Download from object storage if needed
+      if (imagePath.startsWith('/objects/')) {
+        this.updateProgress(scanId, 'download', 7, 'Downloading medical image from object storage...');
+        localImagePath = await this.downloadObjectStorageFile(imagePath, scanId);
+        tempFileToCleanup = localImagePath;
+      }
+      
       // Stage 2: Extract medical metadata
       this.updateProgress(scanId, 'metadata', 10, 'Extracting medical imaging metadata...');
-      const metadata = await this.extractMedicalMetadata(imagePath);
+      const metadata = await this.extractMedicalMetadata(localImagePath);
       
       // Stage 3: Preprocessing for medical volume generation
       this.updateProgress(scanId, 'preprocessing', 20, 'Preprocessing medical image data...');
-      const preprocessedPath = await this.preprocessMedicalImage(imagePath, scanId);
+      const preprocessedPath = await this.preprocessMedicalImage(localImagePath, scanId);
       
       // Stage 4: Generate 3D volume from 2D medical image
       this.updateProgress(scanId, 'volumeGeneration', 35, 'Generating 3D medical volume...');
@@ -125,30 +137,110 @@ export class ServerMedical3DConverter {
       // Clean up temporary files
       await this.cleanupTemporaryFiles(scanId);
       
+      // Clean up object storage temp file if it was created
+      if (tempFileToCleanup && fs.existsSync(tempFileToCleanup)) {
+        try {
+          fs.unlinkSync(tempFileToCleanup);
+          console.log(`Cleaned up temporary file: ${tempFileToCleanup}`);
+        } catch (cleanupError) {
+          console.warn(`Failed to clean up temporary file ${tempFileToCleanup}:`, cleanupError);
+        }
+      }
+      
       return finalPath;
       
     } catch (error) {
       console.error(`3D conversion failed for scan ${scanId}:`, error);
       this.updateProgress(scanId, 'error', -1, `Conversion failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      
+      // Clean up object storage temp file on error
+      if (tempFileToCleanup && fs.existsSync(tempFileToCleanup)) {
+        try {
+          fs.unlinkSync(tempFileToCleanup);
+          console.log(`Cleaned up temporary file after error: ${tempFileToCleanup}`);
+        } catch (cleanupError) {
+          console.warn(`Failed to clean up temporary file ${tempFileToCleanup}:`, cleanupError);
+        }
+      }
+      
       throw error;
     }
   }
 
   /**
-   * Validate medical image file
+   * Validate medical image file from object storage
    */
   private async validateMedicalImage(imagePath: string): Promise<void> {
-    if (!fs.existsSync(imagePath)) {
-      throw new Error('Medical image file not found');
+    try {
+      // Check if path is object storage path
+      if (imagePath.startsWith('/objects/')) {
+        const objectFile = await this.objectStorageService.getObjectEntityFile(imagePath);
+        const [metadata] = await objectFile.getMetadata();
+        
+        if (!metadata.size || metadata.size === 0) {
+          throw new Error('Medical image file is empty');
+        }
+        
+        // Validate file type for medical imaging
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/dicom'];
+        if (!allowedTypes.includes(metadata.contentType || '')) {
+          console.warn(`Warning: Unusual content type for medical image: ${metadata.contentType}`);
+        }
+        
+      } else {
+        // Fallback to local file validation
+        if (!fs.existsSync(imagePath)) {
+          throw new Error('Medical image file not found');
+        }
+        
+        const stats = fs.statSync(imagePath);
+        if (stats.size === 0) {
+          throw new Error('Medical image file is empty');
+        }
+      }
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('not found')) {
+        throw new Error('Medical image file not found');
+      }
+      throw error;
     }
-    
-    const stats = fs.statSync(imagePath);
-    if (stats.size === 0) {
-      throw new Error('Medical image file is empty');
+  }
+
+  /**
+   * Download object storage file to local temporary location
+   */
+  private async downloadObjectStorageFile(objectStoragePath: string, scanId: string): Promise<string> {
+    try {
+      const objectFile = await this.objectStorageService.getObjectEntityFile(objectStoragePath);
+      const tempPath = path.join(this.uploadsDir, `${scanId}_temp_${randomUUID()}.tmp`);
+      
+      // Create write stream to local file
+      const writeStream = fs.createWriteStream(tempPath);
+      const readStream = objectFile.createReadStream();
+      
+      return new Promise((resolve, reject) => {
+        readStream.pipe(writeStream);
+        
+        writeStream.on('finish', () => {
+          console.log(`Downloaded object storage file to: ${tempPath}`);
+          resolve(tempPath);
+        });
+        
+        writeStream.on('error', (error) => {
+          console.error(`Error writing temp file: ${error}`);
+          reject(error);
+        });
+        
+        readStream.on('error', (error) => {
+          console.error(`Error reading object storage file: ${error}`);
+          reject(error);
+        });
+      });
+      
+    } catch (error) {
+      console.error(`Failed to download object storage file ${objectStoragePath}:`, error);
+      throw new Error(`Failed to download object storage file: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-    
-    // Additional medical image validation could be added here
-    // such as DICOM header validation, pixel density checks, etc.
   }
 
   /**
