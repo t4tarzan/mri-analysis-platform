@@ -21,12 +21,8 @@ export default function ConversionProgress() {
   const hasValidScan = currentScan && currentScan.processingStatus !== undefined;
   const canStartProcessing = hasValidScan && currentScan?.processingStatus === 'pending';
 
-  // Handle process button click
-  const handleStartProcessing = () => {
-    if (currentScanId && canStartProcessing) {
-      start3DConversion.mutate(currentScanId);
-    }
-  };
+  // Processing is now handled by the upload area's "Process Files" button
+  // This component only displays progress
 
   // Get stage display info
   const getStageInfo = (stage: typeof processingStage) => {
@@ -119,29 +115,7 @@ export default function ConversionProgress() {
             </div>
           </div>
 
-          {/* Process Button */}
-          {canStartProcessing && (
-            <div className="flex justify-center pt-2">
-              <Button 
-                onClick={handleStartProcessing}
-                disabled={start3DConversion.isPending || isProcessing}
-                className="w-full"
-                data-testid="button-start-processing"
-              >
-                {start3DConversion.isPending || isProcessing ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <span className="mr-2">⚡</span>
-                    Start 3D Processing
-                  </>
-                )}
-              </Button>
-            </div>
-          )}
+          {/* Processing is initiated from upload area */}
 
           {/* Status Messages */}
           {!hasValidScan && (

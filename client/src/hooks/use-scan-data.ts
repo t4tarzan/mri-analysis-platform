@@ -15,9 +15,9 @@ export function useScan(scanId?: string) {
     queryKey: ['/api/scans', scanId],
     enabled: !!scanId,
     refetchInterval: (query) => {
-      // Auto-poll every 2 seconds while processing, otherwise no polling
+      // Auto-poll every 2 seconds while processing OR until analysis is completed
       const data = query.state.data;
-      return data?.processingStatus === 'processing' ? 2000 : false;
+      return data && (!data.analysisCompleted || data.processingStatus === 'processing') ? 2000 : false;
     },
     refetchIntervalInBackground: true,
   });

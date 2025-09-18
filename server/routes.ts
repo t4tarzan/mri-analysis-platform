@@ -358,6 +358,39 @@ async function processImageToModel(scanId: string, imagePath: string): Promise<v
     
     console.log(`3D conversion completed for scan ${scanId}: ${modelPath}`);
     
+    // Automatically generate analysis report after successful 3D conversion
+    try {
+      console.log(`Generating analysis report for scan ${scanId}`);
+      
+      // Simulate anomaly detection with default parameters
+      const detections = await simulateAnomalyDetection(75, 60, "aneurysms");
+      
+      // Update scan with detections
+      const updatedScan = await storage.updateMriScan(scanId, {
+        detections: detections
+      });
+      
+      if (updatedScan) {
+        // Generate comprehensive analysis report
+        const reportData = await generateAnalysisReport(updatedScan, {
+          detailLevel: 4,
+          riskThreshold: 7,
+          vizComplexity: 2,
+          reportFormat: "Clinical Summary"
+        });
+
+        await storage.createAnalysisReport(reportData);
+        
+        // Mark analysis as completed
+        await storage.updateMriScan(scanId, { analysisCompleted: true });
+        
+        console.log(`Analysis report generated for scan ${scanId}`);
+      }
+    } catch (reportError) {
+      console.error(`Report generation failed for scan ${scanId}:`, reportError);
+      // Don't fail the entire process if report generation fails
+    }
+    
   } catch (error) {
     console.error(`3D conversion failed for scan ${scanId}:`, error);
     
