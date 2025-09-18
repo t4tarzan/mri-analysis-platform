@@ -17,11 +17,34 @@ export function useFileUpload() {
 
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
-      const formData = new FormData();
-      formData.append('mriFile', file);
-      
-      const response = await apiRequest('POST', '/api/scans/upload', formData);
-      return response.json();
+      // Step 1: Get presigned upload URL from backend
+      const uploadUrlResponse = await apiRequest('POST', '/api/scans/upload-url');
+      const { uploadURL } = await uploadUrlResponse.json();
+
+      // Step 2: Upload file directly to Object Storage using presigned URL
+      const uploadResponse = await fetch(uploadURL, {
+        method: 'PUT',
+        body: file,
+        headers: {
+          'Content-Type': file.type,
+        },
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error(`Upload failed: ${uploadResponse.status}`);
+      }
+
+      // Step 3: Create scan record in database
+      const scanData = {
+        filename: `mri-scan-${Date.now()}-${file.name}`,
+        originalName: file.name,
+        fileSize: file.size,
+        mimeType: file.type,
+        uploadURL: uploadURL,
+      };
+
+      const createResponse = await apiRequest('POST', '/api/scans/create', scanData);
+      return createResponse.json();
     },
     onSuccess: (data, file) => {
       setUploadedFiles(prev => 
@@ -37,6 +60,7 @@ export function useFileUpload() {
       });
     },
     onError: (error, file) => {
+      console.error("Upload error:", error);
       setUploadedFiles(prev => 
         prev.map(f => 
           f.name === file.name 
@@ -53,6 +77,27 @@ export function useFileUpload() {
   });
 
   const uploadFile = (file: File) => {
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/png'];
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        title: "Invalid file type",
+        description: "Only JPG and PNG files are allowed.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (50MB limit)
+    if (file.size > 50 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "File size must be less than 50MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Add file to the list immediately
     const newFile: UploadedFile = {
       name: file.name,

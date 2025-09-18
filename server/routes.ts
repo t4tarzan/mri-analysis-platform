@@ -10,6 +10,7 @@ import { randomUUID } from "crypto";
 import { fileTypeFromBuffer } from "file-type";
 import { medical3DConverter } from "./services/3d-conversion-service";
 import PDFDocument from "pdfkit";
+import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 
 // Configure multer for file uploads
 const upload = multer({
@@ -107,6 +108,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     });
   }
+
+  // Object Storage endpoints
+  // Get upload URL for MRI scan files
+  app.post("/api/scans/upload-url", async (req, res) => {
+    try {
+      const objectStorageService = new ObjectStorageService();
+      const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+      res.json({ uploadURL });
+    } catch (error) {
+      console.error("Error getting upload URL:", error);
+      res.status(500).json({ message: "Failed to get upload URL" });
+    }
+  });
+
+  // Create MRI scan record after successful Object Storage upload
+  app.post("/api/scans/create", async (req, res) => {
+    try {
+      const { filename, originalName, fileSize, mimeType, uploadURL } = req.body;
+      
+      if (!filename || !originalName || !fileSize || !mimeType || !uploadURL) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+
+      // Validate file type
+      const allowedMimeTypes = ['image/jpeg', 'image/png'];
+      if (!allowedMimeTypes.includes(mimeType)) {
+        return res.status(400).json({ message: "Only JPG and PNG image files are allowed" });
+      }
+
+      // Validate file size (50MB limit)
+      if (fileSize > 50 * 1024 * 1024) {
+        return res.status(400).json({ message: "File size exceeds 50MB limit" });
+      }
+
+      const objectStorageService = new ObjectStorageService();
+      const objectPath = objectStorageService.normalizeObjectEntityPath(uploadURL);
+
+      const scanData = {
+        filename: objectPath, // Store object storage path instead of local filename
+        originalName,
+        fileSize,
+        mimeType,
+        processingStatus: "pending" as const,
+        threeDModelPath: null,
+        detections: [],
+        analysisCompleted: false,
+      };
+
+      const scan = await storage.createMriScan(scanData);
+      
+      // Start processing simulation using object storage path
+      setTimeout(() => processImageToModel(scan.id, objectPath), 1000);
+
+      res.status(201).json(scan);
+    } catch (error) {
+      console.error("Error creating scan:", error);
+      res.status(500).json({ message: "Failed to create scan" });
+    }
+  });
+
+  // Serve private objects from Object Storage
+  app.get("/objects/:objectPath(*)", async (req, res) => {
+    const objectStorageService = new ObjectStorageService();
+    try {
+      const objectFile = await objectStorageService.getObjectEntityFile(req.path);
+      objectStorageService.downloadObject(objectFile, res);
+    } catch (error) {
+      console.error("Error serving object:", error);
+      if (error instanceof ObjectNotFoundError) {
+        return res.sendStatus(404);
+      }
+      return res.sendStatus(500);
+    }
+  });
 
   // Upload MRI scan files
   app.post("/api/scans/upload", upload.single('mriFile'), async (req, res) => {
