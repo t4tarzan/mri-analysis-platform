@@ -56,6 +56,28 @@ export default function AnalysisAccordion({ onStepChange }: AnalysisAccordionPro
     onStepChange(section);
   };
 
+  // Handle PDF download
+  const handleDownloadPDF = async () => {
+    if (!scanId) return;
+    
+    try {
+      const response = await fetch(`/api/scans/${scanId}/report?format=pdf`);
+      if (!response.ok) throw new Error('Failed to download PDF');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `mri-analysis-report-${scanId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('PDF download failed:', error);
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Phase 1: Upload & 3D Conversion */}
@@ -297,7 +319,11 @@ export default function AnalysisAccordion({ onStepChange }: AnalysisAccordionPro
                   </p>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Button data-testid="button-download-pdf">
+                  <Button 
+                    onClick={handleDownloadPDF}
+                    disabled={!analysisCompleted || !scanId}
+                    data-testid="button-download-pdf"
+                  >
                     <span className="mr-2">⬇</span>
                     Download PDF
                   </Button>

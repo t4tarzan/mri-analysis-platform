@@ -9,6 +9,7 @@ import fs from "fs";
 import { randomUUID } from "crypto";
 import { fileTypeFromBuffer } from "file-type";
 import { medical3DConverter } from "./services/3d-conversion-service";
+import PDFDocument from "pdfkit";
 
 // Configure multer for file uploads
 const upload = multer({
@@ -283,7 +284,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!report) {
         return res.status(404).json({ message: "Report not found" });
       }
-      res.json(report);
+
+      // Check if PDF format is requested
+      if (req.query.format === 'pdf') {
+        try {
+          const pdf = await generateReportPDF(report);
+          res.setHeader('Content-Type', 'application/pdf');
+          res.setHeader('Content-Disposition', `attachment; filename="mri-analysis-report-${req.params.id}.pdf"`);
+          res.send(pdf);
+        } catch (pdfError) {
+          console.error('PDF generation failed:', pdfError);
+          res.status(500).json({ message: "Failed to generate PDF" });
+        }
+      } else {
+        res.json(report);
+      }
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch report" });
     }
@@ -504,4 +519,107 @@ async function generateAnalysisReport(
     secondaryFindings,
     technicalSummary
   };
+}
+
+// Generate PDF report from analysis data using PDFKit
+async function generateReportPDF(report: any): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    try {
+      const doc = new PDFDocument({ margin: 50 });
+      const chunks: Buffer[] = [];
+      
+      doc.on('data', chunk => chunks.push(chunk));
+      doc.on('end', () => resolve(Buffer.concat(chunks)));
+      doc.on('error', reject);
+
+      // Header
+      doc.fontSize(24).fillColor('#007acc').text('MRI Analysis Report', { align: 'center' });
+      doc.moveDown(0.5);
+      doc.fontSize(14).fillColor('#666').text('Comprehensive Medical Imaging Analysis', { align: 'center' });
+      doc.fontSize(12).text(`Generated on ${new Date().toLocaleDateString()}`, { align: 'center' });
+      doc.moveDown(1);
+
+      // Draw line
+      doc.strokeColor('#007acc').lineWidth(2);
+      doc.moveTo(50, doc.y).lineTo(545, doc.y).stroke();
+      doc.moveDown(1);
+
+      // Risk Assessment Section
+      doc.fontSize(18).fillColor('#007acc').text('Risk Assessment');
+      doc.moveDown(0.5);
+      
+      const riskColor = report.riskScore > 7 ? '#d32f2f' : report.riskScore > 4 ? '#f57c00' : '#388e3c';
+      doc.fontSize(14).fillColor(riskColor).text(`Overall Risk Score: ${report.riskScore}/10`);
+      doc.fontSize(12).fillColor('#666').text(`Detection Accuracy: ${report.detectionAccuracy}% | Image Quality: ${report.imageQuality}/10`);
+      doc.moveDown(1);
+
+      // Critical Findings Section  
+      doc.fontSize(16).fillColor('#007acc').text('Critical Findings');
+      doc.moveDown(0.5);
+      
+      if (report.criticalFindings && report.criticalFindings.length > 0) {
+        report.criticalFindings.forEach((finding: any) => {
+          doc.fontSize(12).fillColor('#333');
+          doc.text(`• ${finding.title}`, { indent: 20 });
+          doc.fontSize(10).fillColor('#666');
+          doc.text(finding.description, { indent: 30 });
+          doc.text(`Confidence: ${finding.confidence}%`, { indent: 30 });
+          doc.moveDown(0.3);
+        });
+      } else {
+        doc.fontSize(12).fillColor('#666').text('No critical findings detected.');
+      }
+      doc.moveDown(1);
+
+      // Secondary Findings Section
+      doc.fontSize(16).fillColor('#007acc').text('Secondary Findings');
+      doc.moveDown(0.5);
+      
+      if (report.secondaryFindings && report.secondaryFindings.length > 0) {
+        report.secondaryFindings.forEach((finding: any) => {
+          doc.fontSize(12).fillColor('#333');
+          doc.text(`• ${finding.title}`, { indent: 20 });
+          doc.fontSize(10).fillColor('#666');
+          doc.text(finding.description, { indent: 30 });
+          doc.text(`Confidence: ${finding.confidence}%`, { indent: 30 });
+          doc.moveDown(0.3);
+        });
+      } else {
+        doc.fontSize(12).fillColor('#666').text('No secondary findings detected.');
+      }
+      doc.moveDown(1);
+
+      // Technical Summary Section
+      doc.fontSize(16).fillColor('#007acc').text('Technical Summary');
+      doc.moveDown(0.5);
+      
+      const technicalData = [
+        ['Processing Time', `${report.technicalSummary?.processingTime || 'N/A'} seconds`],
+        ['Images Analyzed', `${report.technicalSummary?.imagesAnalyzed || 'N/A'}`],
+        ['Model Version', `${report.technicalSummary?.modelVersion || 'N/A'}`],
+        ['Algorithm', `${report.technicalSummary?.algorithm || 'N/A'}`],
+        ['Image Resolution', `${report.technicalSummary?.imageResolution || 'N/A'}`],
+        ['Quality Score', `${report.technicalSummary?.qualityScore || 'N/A'}/10`]
+      ];
+
+      technicalData.forEach(([label, value]) => {
+        doc.fontSize(12).fillColor('#333').text(`${label}:`, { continued: true });
+        doc.fillColor('#666').text(` ${value}`);
+        doc.moveDown(0.2);
+      });
+
+      // Footer
+      doc.moveDown(2);
+      doc.strokeColor('#ddd').lineWidth(1);
+      doc.moveTo(50, doc.y).lineTo(545, doc.y).stroke();
+      doc.moveDown(0.5);
+      
+      doc.fontSize(10).fillColor('#666').text('This report was generated by the MRI Analysis Platform for research purposes.', { align: 'center' });
+      doc.text(`Report ID: ${report.id} | Scan ID: ${report.scanId}`, { align: 'center' });
+
+      doc.end();
+    } catch (error) {
+      reject(error);
+    }
+  });
 }
