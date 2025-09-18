@@ -4,53 +4,93 @@
 @tailwind utilities;
 
 :root {
-  /* Professional Medical Dark Theme */
-  --background: hsl(215, 28%, 8%);  /* Dark slate background */
-  --foreground: hsl(0, 0%, 95%);    /* High contrast white text */
-  --card: hsl(215, 25%, 10%);       /* Slightly lighter card background */
-  --card-foreground: hsl(0, 0%, 95%);
-  --popover: hsl(215, 25%, 10%);
-  --popover-foreground: hsl(0, 0%, 95%);
-  --primary: hsl(187, 100%, 42%);   /* Bright cyan blue for primary actions */
-  --primary-foreground: hsl(0, 0%, 100%);
-  --secondary: hsl(215, 20%, 15%);  /* Muted secondary elements */
-  --secondary-foreground: hsl(0, 0%, 85%);
-  --muted: hsl(215, 20%, 12%);      /* Subtle muted backgrounds */
-  --muted-foreground: hsl(215, 10%, 60%);
-  --accent: hsl(0, 72%, 58%);       /* Red for alerts/critical findings */
-  --accent-foreground: hsl(0, 0%, 100%);
-  --destructive: hsl(0, 84%, 60%);
-  --destructive-foreground: hsl(0, 0%, 100%);
-  --border: hsl(215, 20%, 18%);     /* Subtle borders */
-  --input: hsl(215, 20%, 15%);      /* Input field backgrounds */
-  --ring: hsl(187, 100%, 42%);      /* Focus ring cyan */
-  --chart-1: hsl(0, 72%, 58%);      /* Red - Critical */
-  --chart-2: hsl(38, 92%, 50%);     /* Orange - Warning */
-  --chart-3: hsl(187, 100%, 42%);   /* Blue - Normal */
-  --chart-4: hsl(142, 71%, 45%);    /* Green - Good */
-  --chart-5: hsl(271, 81%, 56%);    /* Purple - Info */
-  --sidebar: hsl(215, 25%, 8%);
-  --sidebar-foreground: hsl(0, 0%, 95%);
-  --sidebar-primary: hsl(187, 100%, 42%);
-  --sidebar-primary-foreground: hsl(0, 0%, 100%);
-  --sidebar-accent: hsl(215, 20%, 12%);
-  --sidebar-accent-foreground: hsl(187, 100%, 42%);
-  --sidebar-border: hsl(215, 20%, 18%);
-  --sidebar-ring: hsl(187, 100%, 42%);
-  --font-sans: "Inter", system-ui, sans-serif;
-  --font-serif: Georgia, serif;
-  --font-mono: Menlo, monospace;
+  /* Light theme (fallback) */
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+  --primary: 187 100% 42%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 210 40% 96%;
+  --secondary-foreground: 222.2 84% 4.9%;
+  --muted: 210 40% 96%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+  --accent: 0 72% 58%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 187 100% 42%;
+  --chart-1: 0 72% 58%;
+  --chart-2: 38 92% 50%;
+  --chart-3: 187 100% 42%;
+  --chart-4: 142 71% 45%;
+  --chart-5: 271 81% 56%;
+  --sidebar: 0 0% 100%;
+  --sidebar-foreground: 222.2 84% 4.9%;
+  --sidebar-primary: 187 100% 42%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 210 40% 96%;
+  --sidebar-accent-foreground: 187 100% 42%;
+  --sidebar-border: 214.3 31.8% 91.4%;
+  --sidebar-ring: 187 100% 42%;
   --radius: 0.5rem;
   
   /* Medical-specific color variables */
-  --medical-risk-high: hsl(0, 72%, 58%);     /* Red for high risk */
-  --medical-risk-medium: hsl(38, 92%, 50%);  /* Orange for medium risk */
-  --medical-risk-low: hsl(187, 100%, 42%);   /* Blue for low risk/normal */
-  --medical-success: hsl(142, 71%, 45%);     /* Green for success */
-  --medical-warning: hsl(38, 92%, 50%);      /* Orange for warnings */
+  --medical-risk-high: 0 72% 58%;
+  --medical-risk-medium: 38 92% 50%;
+  --medical-risk-low: 187 100% 42%;
+  --medical-success: 142 71% 45%;
+  --medical-warning: 38 92% 50%;
 }
 
-/* Apply dark theme globally */
+.dark {
+  /* Professional Medical Dark Theme */
+  --background: 215 28% 8%;    /* Dark slate background */
+  --foreground: 0 0% 95%;      /* High contrast white text */
+  --card: 215 25% 10%;         /* Slightly lighter card background */
+  --card-foreground: 0 0% 95%;
+  --popover: 215 25% 10%;
+  --popover-foreground: 0 0% 95%;
+  --primary: 187 100% 42%;     /* Bright cyan blue for primary actions */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 215 20% 15%;    /* Muted secondary elements */
+  --secondary-foreground: 0 0% 85%;
+  --muted: 215 20% 12%;        /* Subtle muted backgrounds */
+  --muted-foreground: 215 10% 60%;
+  --accent: 0 72% 58%;         /* Red for alerts/critical findings */
+  --accent-foreground: 0 0% 100%;
+  --destructive: 0 84% 60%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 215 20% 18%;       /* Subtle borders */
+  --input: 215 20% 15%;        /* Input field backgrounds */
+  --ring: 187 100% 42%;        /* Focus ring cyan */
+  --chart-1: 0 72% 58%;        /* Red - Critical */
+  --chart-2: 38 92% 50%;       /* Orange - Warning */
+  --chart-3: 187 100% 42%;     /* Blue - Normal */
+  --chart-4: 142 71% 45%;      /* Green - Good */
+  --chart-5: 271 81% 56%;      /* Purple - Info */
+  --sidebar: 215 25% 8%;
+  --sidebar-foreground: 0 0% 95%;
+  --sidebar-primary: 187 100% 42%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 215 20% 12%;
+  --sidebar-accent-foreground: 187 100% 42%;
+  --sidebar-border: 215 20% 18%;
+  --sidebar-ring: 187 100% 42%;
+  
+  /* Medical-specific dark theme colors */
+  --medical-risk-high: 0 72% 58%;
+  --medical-risk-medium: 38 92% 50%;
+  --medical-risk-low: 187 100% 42%;
+  --medical-success: 142 71% 45%;
+  --medical-warning: 38 92% 50%;
+}
+
+/* Apply dark theme globally for medical interface */
 html {
   @apply bg-background text-foreground;
 }
@@ -62,13 +102,17 @@ body {
   background: hsl(var(--background));
 }
 
+html.dark {
+  color-scheme: dark;
+}
+
 * {
   @apply border-border;
 }
 
 /* Medical UI specific styles */
 .medical-sidebar {
-  background: linear-gradient(180deg, hsl(var(--background)) 0%, hsl(215, 25%, 6%) 100%);
+  background: linear-gradient(180deg, hsl(var(--background)) 0%, hsl(215 25% 6%) 100%);
   border-right: 1px solid hsl(var(--border));
 }
 
@@ -79,19 +123,19 @@ body {
 }
 
 .medical-metric-high {
-  background: linear-gradient(135deg, hsl(var(--medical-risk-high)) 0%, hsl(0, 72%, 50%) 100%);
+  background: linear-gradient(135deg, hsl(var(--medical-risk-high)) 0%, hsl(0 72% 50%) 100%);
 }
 
 .medical-metric-medium {
-  background: linear-gradient(135deg, hsl(var(--medical-risk-medium)) 0%, hsl(38, 92%, 45%) 100%);
+  background: linear-gradient(135deg, hsl(var(--medical-risk-medium)) 0%, hsl(38 92% 45%) 100%);
 }
 
 .medical-metric-low {
-  background: linear-gradient(135deg, hsl(var(--medical-risk-low)) 0%, hsl(187, 100%, 38%) 100%);
+  background: linear-gradient(135deg, hsl(var(--medical-risk-low)) 0%, hsl(187 100% 38%) 100%);
 }
 
 .medical-progress-bar {
-  background: linear-gradient(90deg, hsl(var(--primary)) 0%, hsl(187, 100%, 35%) 100%);
+  background: linear-gradient(90deg, hsl(var(--primary)) 0%, hsl(187 100% 35%) 100%);
   box-shadow: 0 0 8px hsl(var(--primary) / 0.3);
 }
 
@@ -102,7 +146,7 @@ body {
 }
 
 .anomaly-badge {
-  background: linear-gradient(135deg, hsl(var(--medical-risk-high)) 0%, hsl(0, 72%, 50%) 100%);
+  background: linear-gradient(135deg, hsl(var(--medical-risk-high)) 0%, hsl(0 72% 50%) 100%);
   box-shadow: 0 0 12px hsl(var(--medical-risk-high) / 0.5);
   animation: pulse-glow 2s ease-in-out infinite alternate;
 }
@@ -157,14 +201,14 @@ body {
 
 /* Enhanced 3D viewer */
 .medical-3d-viewer {
-  background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(215, 20%, 8%) 100%);
+  background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(215 20% 8%) 100%);
   border: 1px solid hsl(var(--border));
   box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.3);
 }
 
 /* Patient info styling */
 .patient-info-card {
-  background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(215, 20%, 12%) 100%);
+  background: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(215 20% 12%) 100%);
   border: 1px solid hsl(var(--border));
 }
 
@@ -211,7 +255,7 @@ body {
 
 /* Professional buttons */
 .btn-medical-primary {
-  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(187, 100%, 38%) 100%);
+  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(187 100% 38%) 100%);
   box-shadow: 0 2px 8px hsl(var(--primary) / 0.3);
   transition: all 0.2s ease;
 }
@@ -222,6 +266,6 @@ body {
 }
 
 .btn-medical-danger {
-  background: linear-gradient(135deg, hsl(var(--medical-risk-high)) 0%, hsl(0, 72%, 50%) 100%);
+  background: linear-gradient(135deg, hsl(var(--medical-risk-high)) 0%, hsl(0 72% 50%) 100%);
   box-shadow: 0 2px 8px hsl(var(--medical-risk-high) / 0.3);
 }

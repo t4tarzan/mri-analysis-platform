@@ -14,37 +14,46 @@ interface MetricCardProps {
 
 function MetricCard({ title, value, progress, description, icon, color, testId }: MetricCardProps) {
   const colorClasses = {
-    accent: "bg-accent/5 border-accent/20 text-accent",
-    primary: "bg-primary/5 border-primary/20 text-primary", 
-    secondary: "bg-secondary/5 border-secondary/20 text-secondary",
-    muted: "bg-muted/50 border-border text-foreground"
+    accent: "medical-card border-medical-risk-high/30 bg-medical-risk-high/5",
+    primary: "medical-card border-primary/30 bg-primary/5", 
+    secondary: "medical-card border-medical-success/30 bg-medical-success/5",
+    muted: "medical-card border-border bg-card"
   };
 
   const progressColors = {
-    accent: "bg-accent",
-    primary: "bg-primary",
-    secondary: "bg-secondary", 
+    accent: "medical-metric-high",
+    primary: "medical-metric-low",
+    secondary: "medical-metric-low bg-medical-success", 
     muted: "bg-muted-foreground"
+  };
+
+  const textColors = {
+    accent: "text-medical-risk-high",
+    primary: "text-primary", 
+    secondary: "text-medical-success",
+    muted: "text-foreground"
   };
 
   return (
     <Card className={colorClasses[color]} data-testid={testId}>
       <CardContent className="p-4">
         <div className="flex items-center justify-between mb-3">
-          <span className="text-sm font-medium text-foreground">{title}</span>
-          {icon}
+          <span className="text-sm font-semibold text-foreground uppercase tracking-wide">{title}</span>
+          <div className={`${textColors[color]}`}>
+            {icon}
+          </div>
         </div>
-        <div className="space-y-2">
-          <p className={`text-3xl font-bold ${color !== "muted" ? `text-${color}` : "text-foreground"}`}>
+        <div className="space-y-3">
+          <p className={`text-3xl font-bold ${textColors[color]}`}>
             {value}
           </p>
-          <div className="w-full bg-muted rounded-full h-2">
+          <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
             <div 
-              className={`${progressColors[color]} h-2 rounded-full transition-all duration-300`} 
+              className={`${progressColors[color]} h-3 rounded-full transition-all duration-500 ease-out medical-progress-bar`} 
               style={{ width: `${progress}%` }}
             />
           </div>
-          <p className="text-xs text-muted-foreground">{description}</p>
+          <p className="text-xs text-muted-foreground font-medium">{description}</p>
         </div>
       </CardContent>
     </Card>
