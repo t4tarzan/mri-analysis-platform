@@ -10,7 +10,7 @@ import { useProcessingState } from "@/hooks/use-processing-state";
 export default function UploadArea() {
   const { uploadedFiles, uploadFile, removeFile, isUploading } = useFileUpload();
   const start3DConversion = useStart3DConversion();
-  const { setCurrentScan } = useProcessingState();
+  const { setCurrentScan, currentScan, isProcessing } = useProcessingState();
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     acceptedFiles.forEach(file => {
@@ -31,7 +31,7 @@ export default function UploadArea() {
   // Check if we have any successfully uploaded files
   const uploadedFileIds = uploadedFiles.filter(f => f.status === "uploaded" && f.id).map(f => f.id!);
   const hasUploadedFiles = uploadedFileIds.length > 0;
-  const isProcessButtonDisabled = !hasUploadedFiles || isUploading || start3DConversion.isPending;
+  const isProcessButtonDisabled = !hasUploadedFiles || isUploading || start3DConversion.isPending || isProcessing;
 
   const handleProcessFiles = () => {
     if (uploadedFileIds.length > 0) {
@@ -127,7 +127,7 @@ export default function UploadArea() {
               <div className="animate-spin rounded-full h-4 w-4 border-b border-white mr-2" />
               Uploading...
             </>
-          ) : start3DConversion.isPending ? (
+          ) : start3DConversion.isPending || isProcessing ? (
             <>
               <div className="animate-spin rounded-full h-4 w-4 border-b border-white mr-2" />
               Processing...

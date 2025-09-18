@@ -1,0 +1,16 @@
+solid Medical_Model_4f4290eb-6368-4b30-8014-5dc2871ab159
+facet normal 0.0 0.0 1.0
+  outer loop
+    vertex 0.0 0.0 0.0
+    vertex 1.0 0.0 0.0
+    vertex 0.5 1.0 0.0
+  endloop
+endfacet
+facet normal 0.0 1.0 0.0
+  outer loop
+    vertex 0.0 0.0 0.0
+    vertex 0.5 1.0 0.0
+    vertex 0.5 0.5 1.0
+  endloop
+endfacet
+endsolid Medical_Model_4f4290eb-6368-4b30-8014-5dc2871ab159
