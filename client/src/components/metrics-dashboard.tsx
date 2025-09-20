@@ -66,6 +66,7 @@ export default function MetricsDashboard() {
   
   // Use dynamic data if available, calculate medical scan-specific metrics
   const riskScore = report?.riskScore ?? 6.8;
+  const overallRisk = report?.overallRisk ?? "moderate"; // Backend medical assessment
   const detectionAccuracy = report?.detectionAccuracy ?? 94;
   const imageQuality = report?.imageQuality ?? 8.9;
   const processingTime = report?.processingTime ?? 2.43;
@@ -103,9 +104,9 @@ export default function MetricsDashboard() {
         title="Risk Score"
         value={riskScore.toFixed(1)}
         progress={Math.round(riskScore * 10)}
-        description={riskScore > 7 ? "High priority attention required" : riskScore > 4 ? "Moderate risk detected" : "Low risk assessment"}
+        description={overallRisk === "high" ? "High priority attention required" : overallRisk === "moderate" ? "Moderate risk detected" : "Low risk assessment"}
         icon={<AlertTriangle className="h-5 w-5 text-accent" />}
-        color="accent"
+        color={overallRisk === "high" ? "accent" : overallRisk === "moderate" ? "primary" : "secondary"}
         testId="metric-risk-score"
       />
       

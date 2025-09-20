@@ -13,6 +13,34 @@ export default function DetectionOverlay() {
 
   const hasDetections = detections.length > 0;
   
+  // Helper function to get medical severity styling
+  const getSeverityStyle = (detection: Detection) => {
+    const severity = detection.severity || "minor";
+    switch (severity) {
+      case "critical":
+        return {
+          border: "border-medical-risk-high",
+          bg: "bg-medical-risk-high/10",
+          dot: "bg-medical-risk-high",
+          badge: "destructive" as const
+        };
+      case "major":
+        return {
+          border: "border-medical-risk-medium",
+          bg: "bg-medical-risk-medium/10", 
+          dot: "bg-medical-risk-medium",
+          badge: "secondary" as const
+        };
+      default: // minor
+        return {
+          border: "border-medical-risk-low",
+          bg: "bg-medical-risk-low/10",
+          dot: "bg-medical-risk-low", 
+          badge: "outline" as const
+        };
+    }
+  };
+  
   if (isLoading) {
     return (
       <div className="relative">
@@ -58,34 +86,37 @@ export default function DetectionOverlay() {
           data-testid="mri-scan-image"
         />
         
-        {/* Detection bounding boxes with enhanced styling */}
-        {detections.filter(detection => detection.coordinates).map((detection) => (
-          <div
-            key={detection.id}
-            className="absolute pointer-events-none"
-            style={{
-              top: `${detection.coordinates.y}%`,
-              left: `${detection.coordinates.x}%`,
-              width: `${detection.coordinates.width}px`,
-              height: `${detection.coordinates.height}px`,
-            }}
-            data-testid={`detection-box-${detection.id}`}
-          >
-            {/* Detection Box */}
-            <div className="w-full h-full border-2 border-medical-risk-high rounded-md bg-medical-risk-high/10 animate-pulse">
-              {/* Corner indicators */}
-              <div className="absolute -top-1 -left-1 w-3 h-3 bg-medical-risk-high rounded-full"></div>
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-medical-risk-high rounded-full"></div>
-              <div className="absolute -bottom-1 -left-1 w-3 h-3 bg-medical-risk-high rounded-full"></div>
-              <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-medical-risk-high rounded-full"></div>
+        {/* Detection bounding boxes with medical severity styling */}
+        {detections.filter(detection => detection.coordinates).map((detection) => {
+          const severityStyle = getSeverityStyle(detection);
+          return (
+            <div
+              key={detection.id}
+              className="absolute pointer-events-none"
+              style={{
+                top: `${detection.coordinates.y}%`,
+                left: `${detection.coordinates.x}%`,
+                width: `${detection.coordinates.width}px`,
+                height: `${detection.coordinates.height}px`,
+              }}
+              data-testid={`detection-box-${detection.id}`}
+            >
+              {/* Detection Box with medical severity styling */}
+              <div className={`w-full h-full border-2 ${severityStyle.border} rounded-md ${severityStyle.bg} animate-pulse`}>
+                {/* Corner indicators with severity color */}
+                <div className={`absolute -top-1 -left-1 w-3 h-3 ${severityStyle.dot} rounded-full`}></div>
+                <div className={`absolute -top-1 -right-1 w-3 h-3 ${severityStyle.dot} rounded-full`}></div>
+                <div className={`absolute -bottom-1 -left-1 w-3 h-3 ${severityStyle.dot} rounded-full`}></div>
+                <div className={`absolute -bottom-1 -right-1 w-3 h-3 ${severityStyle.dot} rounded-full`}></div>
+              </div>
+              
+              {/* Detection Label with severity-based background */}
+              <div className={`absolute -top-8 left-0 ${severityStyle.dot} text-white px-2 py-1 rounded text-xs font-bold`}>
+                {detection.type.toUpperCase()} - {Math.round(detection.confidence)}%
+              </div>
             </div>
-            
-            {/* Detection Label */}
-            <div className="absolute -top-8 left-0 bg-medical-risk-high text-white px-2 py-1 rounded text-xs font-bold">
-              {detection.type.toUpperCase()} - {detection.confidence}%
-            </div>
-          </div>
-        ))}
+          );
+        })}
         
         {/* Medical Grid Overlay */}
         <div className="absolute inset-0 pointer-events-none">
@@ -108,17 +139,20 @@ export default function DetectionOverlay() {
             Detection Summary
           </h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {detections.filter(detection => detection.coordinates).map((detection) => (
-              <div key={detection.id} className="flex items-center justify-between p-2 bg-muted/50 rounded">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-medical-risk-high"></div>
-                  <span className="text-sm font-medium text-foreground">{detection.type}</span>
+            {detections.filter(detection => detection.coordinates).map((detection) => {
+              const severityStyle = getSeverityStyle(detection);
+              return (
+                <div key={detection.id} className="flex items-center justify-between p-2 bg-muted/50 rounded">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-2 h-2 rounded-full ${severityStyle.dot}`}></div>
+                    <span className="text-sm font-medium text-foreground">{detection.type}</span>
+                  </div>
+                  <Badge variant={severityStyle.badge} className="text-xs">
+                    {Math.round(detection.confidence)}%
+                  </Badge>
                 </div>
-                <Badge variant="destructive" className="text-xs">
-                  {detection.confidence}%
-                </Badge>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}

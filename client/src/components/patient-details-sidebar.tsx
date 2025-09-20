@@ -36,8 +36,12 @@ export default function PatientDetailsSidebar({ currentScan, scanData }: Patient
     priority: "High"
   };
 
-  const riskLevel = scanData?.detections?.length > 0 ? "High" : "Low";
-  const riskColor = riskLevel === "High" ? "medical-risk-high" : "medical-risk-low";
+  // Use backend medical risk assessment instead of local calculation
+  const backendRisk = scanData?.report?.overallRisk || "low";
+  const riskLevel = backendRisk === "high" ? "High" : 
+                   backendRisk === "moderate" ? "Moderate" : "Low";
+  const riskColor = backendRisk === "high" ? "bg-medical-risk-high" : 
+                   backendRisk === "moderate" ? "bg-medical-risk-medium" : "bg-medical-risk-low";
 
   // Download report as PDF
   const handleDownloadReport = async () => {
@@ -207,7 +211,7 @@ export default function PatientDetailsSidebar({ currentScan, scanData }: Patient
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm font-medium">Overall Risk Level</span>
               <Badge 
-                className={`${riskLevel === "High" ? "bg-medical-risk-high" : "bg-medical-risk-low"} text-white`}
+                className={`${riskColor} text-white`}
               >
                 {riskLevel}
               </Badge>
@@ -219,14 +223,19 @@ export default function PatientDetailsSidebar({ currentScan, scanData }: Patient
                 <div className="text-sm text-foreground">
                   {scanData.detections.length} anomal{scanData.detections.length === 1 ? 'y' : 'ies'} detected
                 </div>
-                {scanData.detections.slice(0, 2).map((detection: any, index: number) => (
-                  <div key={index} className="flex items-center gap-2 text-xs">
-                    <div className="w-2 h-2 rounded-full bg-medical-risk-high"></div>
-                    <span className="text-muted-foreground">
-                      {detection.type || "Anomaly"} (Confidence: {Math.round(detection.confidence * 100)}%)
-                    </span>
-                  </div>
-                ))}
+                {scanData.detections.slice(0, 2).map((detection: any, index: number) => {
+                  const severity = detection.severity || "minor";
+                  const dotColor = severity === "critical" ? "bg-medical-risk-high" :
+                                  severity === "major" ? "bg-medical-risk-medium" : "bg-medical-risk-low";
+                  return (
+                    <div key={index} className="flex items-center gap-2 text-xs">
+                      <div className={`w-2 h-2 rounded-full ${dotColor}`}></div>
+                      <span className="text-muted-foreground">
+                        {detection.type || "Anomaly"} (Confidence: {Math.round(detection.confidence)}%)
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </CardContent>
