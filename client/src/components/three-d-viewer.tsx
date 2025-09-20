@@ -300,10 +300,16 @@ export default function ThreeDViewer() {
             </div>
           </div>
           
-          {/* Show message when no detections */}
+          {/* Show appropriate status message */}
           {detections.length === 0 && (
             <div className="text-muted-foreground italic">
-              No detections found
+              {isLoading ? (
+                "Loading scan data..."
+              ) : scan && (!scan.analysisCompleted || scan.processingStatus === 'processing') ? (
+                "Processing..."
+              ) : (
+                "No detections found"
+              )}
             </div>
           )}
         </div>
