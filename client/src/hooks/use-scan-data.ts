@@ -97,7 +97,11 @@ export function useStart3DConversion() {
 // Helper hook to get the most recent scan
 export function useCurrentScan() {
   const { data: scans } = useScans();
-  const currentScan = scans?.[0]; // Most recent scan
+  // Sort by uploadedAt to get truly most recent scan
+  const sortedScans = scans?.sort((a, b) => 
+    new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime()
+  );
+  const currentScan = sortedScans?.[0];
   return {
     scan: currentScan,
     scanId: currentScan?.id
