@@ -503,7 +503,9 @@ npm run test:coverage
 
 ## 🤝 Contributing
 
-We welcome contributions from developers, medical professionals, and students! 
+We welcome contributions from developers, medical professionals, and students! Children from WNTAP White Noise Academy Teen Accelerator Program 
+Niki, Aanya, Rohan, Advik and Nishad guided by Dr Shruti and Faculty Vinayak have staged the app for further development with future plans listed 
+in the future.md file in the repo
 
 ### **🎯 Ways to Contribute**
 
