@@ -499,6 +499,66 @@ async function processImageToModel(scanId: string, imagePath: string): Promise<v
   }
 }
 
+// Medical-first classification system - assigns severity based on medical condition, not confidence
+function assignClinicalSeverity(type: string, confidence: number): {
+  severity: "critical" | "major" | "minor";
+  severityScore: number;
+  riskCategory: "high" | "moderate" | "low";
+  clinicalType: string;
+} {
+  let baseSeverityScore: number;
+  let severity: "critical" | "major" | "minor";
+  let clinicalType: string;
+  
+  // Medical condition priority mapping - aneurysms are ALWAYS critical
+  switch (type) {
+    case "aneurysm":
+      baseSeverityScore = 9;
+      severity = "critical";
+      clinicalType = "cerebral_aneurysm";
+      break;
+    case "hemorrhage":
+      baseSeverityScore = 8;
+      severity = "critical";
+      clinicalType = "brain_hemorrhage";
+      break;
+    case "tumor":
+      baseSeverityScore = 7;
+      severity = "major";
+      clinicalType = "brain_tumor";
+      break;
+    case "lesion":
+      baseSeverityScore = 5;
+      severity = "major";
+      clinicalType = "brain_lesion";
+      break;
+    case "anomaly":
+    default:
+      baseSeverityScore = 3;
+      severity = "minor";
+      clinicalType = "vascular_anomaly";
+      break;
+  }
+  
+  // Adjust by confidence (+/- up to 1 point) but NEVER downgrade medical class
+  const confidenceAdjustment = ((confidence - 70) / 30) * 1; // -1 to +1 based on confidence
+  const finalScore = Math.max(
+    Math.min(10, baseSeverityScore + confidenceAdjustment),
+    severity === "critical" ? 7 : severity === "major" ? 4 : 1 // Floor prevents downgrading
+  );
+  
+  // Assign risk category based on final severity score
+  const riskCategory: "high" | "moderate" | "low" = 
+    finalScore >= 7 ? "high" : finalScore >= 4 ? "moderate" : "low";
+  
+  return {
+    severity,
+    severityScore: Math.round(finalScore * 10) / 10,
+    riskCategory,
+    clinicalType
+  };
+}
+
 // Analyze actual uploaded image and generate unique results
 async function analyzeRealImage(imagePath: string, scanId: string): Promise<Detection[]> {
   try {
@@ -546,11 +606,15 @@ async function analyzeRealImage(imagePath: string, scanId: string): Promise<Dete
     // Primary detection based on image hash and characteristics
     const baseConfidence = 65 + (randomSeed % 25); // 65-90 range based on image hash
     const imageComplexityFactor = Math.floor(brightness * contrast * complexity * 40); // 0-40 range
+    const finalConfidence = Math.min(95, baseConfidence + imageComplexityFactor);
+    
+    const detectionType = brightness > 0.5 ? "aneurysm" : "anomaly";
+    const medicalClassification = assignClinicalSeverity(detectionType, finalConfidence);
     
     detections.push({
       id: `det_${randomSeed}_1`,
-      type: brightness > 0.5 ? "aneurysm" : "anomaly",
-      confidence: Math.min(95, baseConfidence + imageComplexityFactor),
+      type: detectionType,
+      confidence: finalConfidence,
       location: brightness > 0.6 ? "Anterior cerebral artery" : 
                 contrast > 0.5 ? "Middle cerebral artery" : "Temporal lobe region",
       coordinates: { 
@@ -559,17 +623,23 @@ async function analyzeRealImage(imagePath: string, scanId: string): Promise<Dete
         width: Math.floor(30 + (brightness * 35)), 
         height: Math.floor(20 + (contrast * 30)) 
       },
-      riskLevel: (baseConfidence + imageComplexityFactor) > 85 ? "high" : 
-                 (baseConfidence + imageComplexityFactor) > 70 ? "moderate" : "low",
-      description: `${brightness > 0.5 ? 'Vascular' : 'Tissue'} structure detected (hash: ${imageHash.slice(0,6)})`
+      riskLevel: medicalClassification.riskCategory,
+      description: `${brightness > 0.5 ? 'Vascular' : 'Tissue'} structure detected (hash: ${imageHash.slice(0,6)})`,
+      severity: medicalClassification.severity,
+      severityScore: medicalClassification.severityScore,
+      riskCategory: medicalClassification.riskCategory,
+      clinicalType: medicalClassification.clinicalType
     });
     
     // Secondary detection if image complexity is significant
     if (complexity > 0.3 || contrast > 0.4) {
       const secondaryConfidence = 55 + Math.floor((contrast + complexity) * 25); // Dynamic range
+      const secondaryType = complexity > 0.6 ? "lesion" : "anomaly";
+      const secondaryMedical = assignClinicalSeverity(secondaryType, secondaryConfidence);
+      
       detections.push({
         id: `det_${randomSeed}_2`,
-        type: complexity > 0.6 ? "lesion" : "anomaly",
+        type: secondaryType,
         confidence: secondaryConfidence,
         location: complexity > 0.5 ? "Frontal lobe region" : "Posterior region",
         coordinates: { 
@@ -578,8 +648,12 @@ async function analyzeRealImage(imagePath: string, scanId: string): Promise<Dete
           width: Math.floor(25 + (complexity * 25)), 
           height: Math.floor(20 + (brightness * 20)) 
         },
-        riskLevel: secondaryConfidence > 75 ? "moderate" : "low",
-        description: `Secondary finding (complexity: ${complexity.toFixed(2)}, contrast: ${contrast.toFixed(2)})`
+        riskLevel: secondaryMedical.riskCategory,
+        description: `Secondary finding (complexity: ${complexity.toFixed(2)}, contrast: ${contrast.toFixed(2)})`,
+        severity: secondaryMedical.severity,
+        severityScore: secondaryMedical.severityScore,
+        riskCategory: secondaryMedical.riskCategory,
+        clinicalType: secondaryMedical.clinicalType
       });
     }
     
@@ -591,14 +665,19 @@ async function analyzeRealImage(imagePath: string, scanId: string): Promise<Dete
   } catch (error) {
     console.error(`Error analyzing real image for scan ${scanId}:`, error);
     // Fallback to basic detection if analysis fails
+    const fallbackMedical = assignClinicalSeverity("anomaly", 65);
     return [{
       id: `det_fallback_${Date.now()}`,
       type: "anomaly",
       confidence: 65,
       location: "Analysis region",
       coordinates: { x: 40, y: 35, width: 30, height: 25 },
-      riskLevel: "low",
-      description: "Basic detection (image analysis unavailable)"
+      riskLevel: fallbackMedical.riskCategory,
+      description: "Basic detection (image analysis unavailable)",
+      severity: fallbackMedical.severity,
+      severityScore: fallbackMedical.severityScore,
+      riskCategory: fallbackMedical.riskCategory,
+      clinicalType: fallbackMedical.clinicalType
     }];
   }
 }
@@ -677,38 +756,53 @@ async function simulateAnomalyDetection(
   
   // Generate realistic detections based on parameters
   if (sensitivity > 70) {
+    const aneurysmMedical = assignClinicalSeverity("aneurysm", 87);
     detections.push({
       id: `det_${Date.now()}_1`,
       type: "aneurysm",
       confidence: 87,
       location: "Middle cerebral artery, left hemisphere",
       coordinates: { x: 35, y: 25, width: 60, height: 40 },
-      riskLevel: "high",
-      description: "Cerebral aneurysm detected in M1 segment"
+      riskLevel: aneurysmMedical.riskCategory,
+      description: "Cerebral aneurysm detected in M1 segment",
+      severity: aneurysmMedical.severity,
+      severityScore: aneurysmMedical.severityScore,
+      riskCategory: aneurysmMedical.riskCategory,
+      clinicalType: aneurysmMedical.clinicalType
     });
   }
 
   if (sensitivity > 60) {
+    const anomalyMedical = assignClinicalSeverity("anomaly", 73);
     detections.push({
       id: `det_${Date.now()}_2`,
       type: "anomaly",
       confidence: 73,
       location: "Anterior communicating artery",
       coordinates: { x: 20, y: 45, width: 45, height: 35 },
-      riskLevel: "moderate",
-      description: "Vascular anomaly with irregular morphology"
+      riskLevel: anomalyMedical.riskCategory,
+      description: "Vascular anomaly with irregular morphology",
+      severity: anomalyMedical.severity,
+      severityScore: anomalyMedical.severityScore,
+      riskCategory: anomalyMedical.riskCategory,
+      clinicalType: anomalyMedical.clinicalType
     });
   }
 
   if (sensitivity > 50) {
+    const lesionMedical = assignClinicalSeverity("lesion", 68);
     detections.push({
       id: `det_${Date.now()}_3`,
       type: "lesion",
       confidence: 68,
       location: "Right frontal lobe",
       coordinates: { x: 60, y: 30, width: 30, height: 25 },
-      riskLevel: "low",
-      description: "Tissue density variation"
+      riskLevel: lesionMedical.riskCategory,
+      description: "Tissue density variation",
+      severity: lesionMedical.severity,
+      severityScore: lesionMedical.severityScore,
+      riskCategory: lesionMedical.riskCategory,
+      clinicalType: lesionMedical.clinicalType
     });
   }
 

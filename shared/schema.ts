@@ -26,6 +26,11 @@ export const analysisReports = pgTable("analysis_reports", {
   criticalFindings: jsonb("critical_findings").$type<CriticalFinding[]>().default([]).notNull(),
   secondaryFindings: jsonb("secondary_findings").$type<SecondaryFinding[]>().default([]).notNull(),
   technicalSummary: jsonb("technical_summary").$type<TechnicalSummary>().notNull(),
+  // Medical severity classification fields
+  overallRisk: text("overall_risk").$type<"high" | "moderate" | "low">().notNull().default("low"),
+  criticalCount: integer("critical_count").notNull().default(0),
+  majorCount: integer("major_count").notNull().default(0),
+  minorCount: integer("minor_count").notNull().default(0),
   generatedAt: timestamp("generated_at").defaultNow().notNull(),
 });
 
@@ -48,7 +53,7 @@ export type InsertAnalysisReport = z.infer<typeof insertAnalysisReportSchema>;
 
 export interface Detection {
   id: string;
-  type: "aneurysm" | "tumor" | "lesion" | "anomaly";
+  type: "aneurysm" | "tumor" | "lesion" | "anomaly" | "hemorrhage";
   confidence: number;
   location: string;
   coordinates: {
@@ -59,6 +64,11 @@ export interface Detection {
   };
   riskLevel: "low" | "moderate" | "high";
   description: string;
+  // Medical severity classification fields
+  severity: "critical" | "major" | "minor";
+  severityScore: number; // 0-10 scale
+  riskCategory: "high" | "moderate" | "low";
+  clinicalType: string; // e.g., "cerebral_aneurysm", "brain_hemorrhage", etc.
 }
 
 export interface CriticalFinding {
