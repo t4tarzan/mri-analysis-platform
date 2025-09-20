@@ -1,14 +1,19 @@
-import { Brain, Activity, FileText, Settings, User, Home, BarChart3 } from "lucide-react";
+import { Brain, Activity, FileText, Settings, User, Home, BarChart3, Clock, CheckCircle, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { useScans, useCurrentScan } from "@/hooks/use-scan-data";
 
 interface MedicalSidebarProps {
   currentView: string;
   onViewChange: (view: string) => void;
+  onScanSelect?: (scanId: string) => void;
 }
 
-export default function MedicalSidebar({ currentView, onViewChange }: MedicalSidebarProps) {
+export default function MedicalSidebar({ currentView, onViewChange, onScanSelect }: MedicalSidebarProps) {
+  const { data: scans } = useScans();
+  const { scanId: currentScanId } = useCurrentScan();
   const navigationItems = [
     { id: "dashboard", label: "Dashboard", icon: Home },
     { id: "scans", label: "MRI Scans", icon: Brain },
@@ -60,6 +65,89 @@ export default function MedicalSidebar({ currentView, onViewChange }: MedicalSid
             </Button>
           );
         })}
+      </div>
+
+      <Separator className="mx-4" />
+
+      {/* Recent Scans */}
+      <div className="flex-1 p-4 space-y-2 max-h-80 overflow-y-auto">
+        <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+          Recent Scans
+        </div>
+        {scans && scans.length > 0 ? (
+          <div className="space-y-2">
+            {[...scans]
+              .sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime())
+              .slice(0, 8)
+              .map((scan) => {
+                const isSelected = scan.id === currentScanId;
+                const uploadDate = new Date(scan.uploadedAt);
+                const timeAgo = Math.floor((Date.now() - uploadDate.getTime()) / (1000 * 60)); // minutes
+                const timeDisplay = timeAgo < 60 ? 
+                  `${timeAgo}m ago` : 
+                  timeAgo < 1440 ? `${Math.floor(timeAgo / 60)}h ago` : 
+                  `${Math.floor(timeAgo / 1440)}d ago`;
+
+                const getStatusInfo = (status: string) => {
+                  switch (status) {
+                    case 'pending':
+                      return { color: 'bg-yellow-500', icon: Clock };
+                    case 'processing':
+                      return { color: 'bg-blue-500', icon: Activity };
+                    case 'completed':
+                      return { color: 'bg-green-500', icon: CheckCircle };
+                    case 'failed':
+                      return { color: 'bg-red-500', icon: AlertCircle };
+                    default:
+                      return { color: 'bg-gray-500', icon: Clock };
+                  }
+                };
+
+                const statusInfo = getStatusInfo(scan.processingStatus);
+                const StatusIcon = statusInfo.icon;
+
+                return (
+                  <Button
+                    key={scan.id}
+                    variant={isSelected ? "default" : "ghost"}
+                    size="sm"
+                    className={`w-full justify-start h-auto p-3 ${
+                      isSelected ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+                    }`}
+                    onClick={() => {
+                      if (onScanSelect) {
+                        onScanSelect(scan.id);
+                      }
+                      // Switch to analysis view when selecting a scan
+                      if (currentView !== "analysis") {
+                        onViewChange("analysis");
+                      }
+                    }}
+                    data-testid={`scan-history-${scan.id}`}
+                  >
+                    <div className="flex items-center gap-2 w-full">
+                      <div className={`w-2 h-2 rounded-full ${statusInfo.color} flex-shrink-0`}></div>
+                      <div className="flex-1 min-w-0 text-left">
+                        <div className="font-medium text-xs truncate">
+                          {scan.originalName || scan.filename}
+                        </div>
+                        <div className="text-xs text-muted-foreground flex items-center gap-1">
+                          <StatusIcon className="w-3 h-3" />
+                          <span>{scan.processingStatus}</span>
+                          <span>•</span>
+                          <span>{timeDisplay}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </Button>
+                );
+              })}
+          </div>
+        ) : (
+          <div className="text-xs text-muted-foreground italic text-center py-4">
+            No scans available
+          </div>
+        )}
       </div>
 
       <Separator className="mx-4" />

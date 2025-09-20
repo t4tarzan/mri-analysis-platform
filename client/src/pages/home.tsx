@@ -2,17 +2,24 @@ import { useState } from "react";
 import MedicalSidebar from "@/components/medical-sidebar";
 import PatientDetailsSidebar from "@/components/patient-details-sidebar";
 import AnalysisAccordion from "@/components/analysis-accordion";
+import { useProcessingState } from "@/hooks/use-processing-state";
 
 export default function Home() {
   const [currentView, setCurrentView] = useState("analysis");
   const [currentStep, setCurrentStep] = useState(1);
+  const { setCurrentScan } = useProcessingState();
+
+  const handleScanSelect = (scanId: string) => {
+    setCurrentScan(scanId);
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground flex">
       {/* Left Sidebar - Navigation */}
       <MedicalSidebar 
         currentView={currentView} 
-        onViewChange={setCurrentView} 
+        onViewChange={setCurrentView}
+        onScanSelect={handleScanSelect}
       />
 
       {/* Main Content Area */}
