@@ -2,9 +2,14 @@ import { useRef, useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ZoomIn, ZoomOut, RotateCcw, Maximize2 } from "lucide-react";
+import { useCurrentScan, useScan } from "@/hooks/use-scan-data";
 import * as THREE from "three";
 
 export default function ThreeDViewer() {
+  const { scanId } = useCurrentScan();
+  const { data: scan, isLoading } = useScan(scanId);
+  const detections = scan?.detections || [];
+  
   const mountRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
@@ -94,20 +99,40 @@ export default function ThreeDViewer() {
     cerebellumMesh.position.set(0, -0.8, -0.9);
     brainGroup.add(cerebellumMesh);
 
-    // Add detection points (simulated anomalies)
+    // Add detection points based on real scan data
     const pointGeometry = new THREE.SphereGeometry(0.05, 8, 6);
-    const pointMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
     
-    // Aneurysm point
-    const aneurysmPoint = new THREE.Mesh(pointGeometry, pointMaterial);
-    aneurysmPoint.position.set(0.7, 0.3, 0.4);
-    brainGroup.add(aneurysmPoint);
-
-    // Anomaly point
-    const anomalyMaterial = new THREE.MeshBasicMaterial({ color: 0xff6b00 });
-    const anomalyPoint = new THREE.Mesh(pointGeometry, anomalyMaterial);
-    anomalyPoint.position.set(-0.5, 0.2, 0.6);
-    brainGroup.add(anomalyPoint);
+    // Create detection points dynamically from real data
+    detections.forEach((detection, index) => {
+      // Map detection type to color
+      const getDetectionColor = (type: string) => {
+        switch (type) {
+          case 'aneurysm': return 0xff0000; // Red
+          case 'tumor': return 0xff6b00; // Orange
+          case 'lesion': return 0xffff00; // Yellow
+          case 'anomaly': return 0xff6b00; // Orange
+          default: return 0xff0000; // Default red
+        }
+      };
+      
+      const pointMaterial = new THREE.MeshBasicMaterial({ 
+        color: getDetectionColor(detection.type) 
+      });
+      const detectionPoint = new THREE.Mesh(pointGeometry, pointMaterial);
+      
+      // Convert 2D coordinates to 3D brain space (normalize and map to brain volume)
+      const normalizedX = (detection.coordinates.x - 50) / 50; // Convert % to -1 to 1 range
+      const normalizedY = (50 - detection.coordinates.y) / 50; // Invert Y and convert % to -1 to 1 range
+      const normalizedZ = 0.3 + (index * 0.2); // Distribute detections in Z space
+      
+      detectionPoint.position.set(
+        normalizedX * 1.2, // Scale to brain size
+        normalizedY * 0.9,
+        normalizedZ
+      );
+      
+      brainGroup.add(detectionPoint);
+    });
 
     // Grid plane
     const gridHelper = new THREE.GridHelper(4, 20, 0x888888, 0xcccccc);
@@ -165,7 +190,7 @@ export default function ThreeDViewer() {
       }
       renderer.dispose();
     };
-  }, [isRotating]);
+  }, [isRotating, detections]);
 
   const handleResetView = () => {
     if (cameraRef.current && brainRef.current) {
@@ -243,22 +268,44 @@ export default function ThreeDViewer() {
 
         {/* Legend */}
         <div className="absolute bottom-4 left-4 bg-card/90 backdrop-blur-sm rounded-lg p-3 text-xs space-y-1">
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-1 bg-red-500"></div>
-            <span>Aneurysm (87%)</span>
+          {/* Show real detections */}
+          {detections.map((detection) => {
+            const getColorClass = (type: string) => {
+              switch (type) {
+                case 'aneurysm': return 'bg-red-500';
+                case 'tumor': return 'bg-orange-500';
+                case 'lesion': return 'bg-yellow-500';
+                case 'anomaly': return 'bg-orange-500';
+                default: return 'bg-red-500';
+              }
+            };
+            
+            return (
+              <div key={detection.id} className="flex items-center gap-2">
+                <div className={`w-3 h-1 ${getColorClass(detection.type)}`}></div>
+                <span>{detection.type.charAt(0).toUpperCase() + detection.type.slice(1)} ({detection.confidence}%)</span>
+              </div>
+            );
+          })}
+          
+          {/* Brain structure legend */}
+          <div className="border-t border-border pt-1 mt-2">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-1 bg-blue-500"></div>
+              <span>Left Hemisphere</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-1 bg-yellow-500"></div>
+              <span>Right Hemisphere</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-1 bg-orange-500"></div>
-            <span>Anomaly (73%)</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-1 bg-blue-500"></div>
-            <span>Left Hemisphere</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-1 bg-yellow-500"></div>
-            <span>Right Hemisphere</span>
-          </div>
+          
+          {/* Show message when no detections */}
+          {detections.length === 0 && (
+            <div className="text-muted-foreground italic">
+              No detections found
+            </div>
+          )}
         </div>
       </div>
     </Card>
