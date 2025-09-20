@@ -1,4 +1,4 @@
-import { Calendar, Clock, User, AlertTriangle, CheckCircle, FileText } from "lucide-react";
+import { Calendar, Clock, User, AlertTriangle, CheckCircle, FileText, Download } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -7,6 +7,8 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
+import { useCurrentScan } from "@/hooks/use-scan-data";
+import { useToast } from "@/hooks/use-toast";
 
 interface PatientDetailsSidebarProps {
   currentScan?: any;
@@ -18,6 +20,9 @@ export default function PatientDetailsSidebar({ currentScan, scanData }: Patient
   const [slice, setSlice] = useState([50]);
   const [showOverlay, setShowOverlay] = useState(true);
   const [showGrid, setShowGrid] = useState(false);
+  
+  const { scanId } = useCurrentScan();
+  const { toast } = useToast();
 
   // Mock patient data - in real app this would come from scan metadata
   const patientInfo = {
@@ -33,6 +38,86 @@ export default function PatientDetailsSidebar({ currentScan, scanData }: Patient
 
   const riskLevel = scanData?.detections?.length > 0 ? "High" : "Low";
   const riskColor = riskLevel === "High" ? "medical-risk-high" : "medical-risk-low";
+
+  // Download report as PDF
+  const handleDownloadReport = async () => {
+    if (!scanId) {
+      toast({
+        title: "No scan selected",
+        description: "Please select a scan to download report",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      const response = await fetch(`/api/scans/${scanId}/report?format=pdf`);
+      if (!response.ok) throw new Error('Failed to download PDF report');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `mri-analysis-report-${scanId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "Report downloaded",
+        description: "MRI analysis report has been downloaded successfully",
+      });
+    } catch (error) {
+      console.error('PDF download failed:', error);
+      toast({
+        title: "Download failed",
+        description: "Failed to download the analysis report",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Export analysis data as JSON
+  const handleExportAnalysis = async () => {
+    if (!scanId) {
+      toast({
+        title: "No scan selected", 
+        description: "Please select a scan to export analysis data",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      const response = await fetch(`/api/scans/${scanId}/report`);
+      if (!response.ok) throw new Error('Failed to export analysis data');
+      
+      const analysisData = await response.json();
+      const dataStr = JSON.stringify(analysisData, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `mri-analysis-data-${scanId}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "Analysis data exported",
+        description: "MRI analysis data has been exported successfully",
+      });
+    } catch (error) {
+      console.error('Analysis export failed:', error);
+      toast({
+        title: "Export failed",
+        description: "Failed to export analysis data",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="w-80 h-full bg-card border-l border-border flex flex-col">
@@ -222,6 +307,7 @@ export default function PatientDetailsSidebar({ currentScan, scanData }: Patient
       {/* Action Buttons */}
       <div className="p-4 border-t border-border space-y-2">
         <Button 
+          onClick={handleDownloadReport}
           className="btn-medical-primary w-full" 
           size="sm"
           data-testid="button-download-report"
@@ -231,11 +317,13 @@ export default function PatientDetailsSidebar({ currentScan, scanData }: Patient
         </Button>
         
         <Button 
+          onClick={handleExportAnalysis}
           variant="outline" 
           className="w-full" 
           size="sm"
           data-testid="button-export-data"
         >
+          <Download className="w-4 h-4 mr-2" />
           Export Analysis Data
         </Button>
       </div>
