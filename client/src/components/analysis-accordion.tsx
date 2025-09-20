@@ -248,7 +248,7 @@ export default function AnalysisAccordion({ onStepChange }: AnalysisAccordionPro
           </Card>
 
           {/* Detection Results and Metrics Below */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <div className="grid grid-cols-1 gap-6 mb-6">
             <Card className="p-4">
               <h3 className="text-lg font-semibold text-foreground mb-4">
                 Detection Results
