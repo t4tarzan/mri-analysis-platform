@@ -293,8 +293,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Run anomaly detection
   app.post("/api/scans/:id/detect", async (req, res) => {
     try {
-      console.log(`Detection request for scan ID: ${req.params.id}`);
-      const { sensitivity = 75, confidence = 60, detectionType = "aneurysms" } = req.body;
+      console.log(`Starting real image analysis for scan ID: ${req.params.id}`);
       
       const scan = await storage.getMriScan(req.params.id);
       if (!scan) {
@@ -302,12 +301,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Scan not found" });
       }
 
-      // Simulate AI detection process
-      const detections = await simulateAnomalyDetection(sensitivity, confidence, detectionType);
+      // Resolve the actual image path for analysis
+      const imagePath = scan.filename.startsWith('/objects/') 
+        ? scan.filename 
+        : path.join('uploads', scan.filename);
+      
+      console.log(`Analyzing real image at: ${imagePath}`);
+      
+      // Perform real image analysis instead of simulation
+      const detections = await analyzeRealImage(imagePath, req.params.id);
       
       const updatedScan = await storage.updateMriScan(req.params.id, {
-        detections,
-        processingStatus: "completed",
+        detections
       });
 
       res.json(updatedScan);
