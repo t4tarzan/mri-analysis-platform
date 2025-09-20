@@ -818,27 +818,37 @@ async function generateAnalysisReport(
   // Simulate report generation
   await new Promise(resolve => setTimeout(resolve, 1000));
   
-  const criticalFindings: CriticalFinding[] = scan.detections
-    .filter((d: Detection) => d.riskLevel === "high")
-    .map((d: Detection) => ({
-      id: d.id,
-      title: d.type === "aneurysm" ? "Cerebral Aneurysm" : "Critical Anomaly",
-      location: d.location,
-      confidence: d.confidence,
-      riskLevel: "high" as const,
-      size: d.type === "aneurysm" ? "~4.2mm diameter" : "~2.8mm",
-      recommendation: d.riskLevel === "high" ? "Immediate consultation" : "Follow-up imaging"
-    }));
+  // Medical severity-based classification (NEW SYSTEM)
+  const criticalDetections = scan.detections.filter((d: Detection) => d.severity === "critical");
+  const majorDetections = scan.detections.filter((d: Detection) => d.severity === "major");
+  const minorDetections = scan.detections.filter((d: Detection) => d.severity === "minor");
 
-  const secondaryFindings: SecondaryFinding[] = scan.detections
-    .filter((d: Detection) => d.riskLevel !== "high")
-    .map((d: Detection) => ({
-      id: d.id,
-      title: d.description,
-      description: `${d.location} - ${d.confidence}% confidence`,
-      confidence: d.confidence,
-      significance: d.riskLevel === "moderate" ? "Follow-up recommended" : "Within normal variation"
-    }));
+  // Count by medical severity for proper risk assessment
+  const criticalCount = criticalDetections.length;
+  const majorCount = majorDetections.length; 
+  const minorCount = minorDetections.length;
+
+  // Critical findings are based on medical severity, NOT confidence thresholds
+  const criticalFindings: CriticalFinding[] = criticalDetections.map((d: Detection) => ({
+    id: d.id,
+    title: d.type === "aneurysm" ? "Cerebral Aneurysm" : 
+           d.type === "hemorrhage" ? "Brain Hemorrhage" : "Critical Anomaly",
+    location: d.location,
+    confidence: d.confidence,
+    riskLevel: "high" as const,
+    size: d.type === "aneurysm" ? "~4.2mm diameter" : 
+          d.type === "hemorrhage" ? "~8.1mm region" : "~2.8mm",
+    recommendation: "Immediate consultation required"
+  }));
+
+  // Secondary findings include both major and minor severity findings
+  const secondaryFindings: SecondaryFinding[] = [...majorDetections, ...minorDetections].map((d: Detection) => ({
+    id: d.id,
+    title: d.description,
+    description: `${d.location} - ${d.confidence}% confidence`,
+    confidence: d.confidence,
+    significance: d.severity === "major" ? "Follow-up recommended" : "Within normal variation"
+  }));
 
   // Generate dynamic technical summary based on actual analysis
   let dynamicProcessingTime = 2.43;
@@ -865,7 +875,24 @@ async function generateAnalysisReport(
     qualityScore: Number(dynamicQualityScore.toFixed(1))
   };
 
-  const riskScore = Math.min(10, criticalFindings.length * 3 + secondaryFindings.length * 1);
+  // NEW MEDICAL RISK SCORING SYSTEM
+  // Formula: 7*critical + 3*major + 1*minor (prioritizes medical severity)
+  let riskScore = Math.min(10, criticalCount * 7 + majorCount * 3 + minorCount * 1);
+  
+  // FLOOR RULE: Any critical finding = minimum risk score 7 (HIGH RISK)
+  if (criticalCount > 0) {
+    riskScore = Math.max(riskScore, 7);
+  }
+  
+  // Overall risk assessment based on medical findings
+  let overallRisk: "high" | "moderate" | "low";
+  if (criticalCount > 0 || riskScore >= 7) {
+    overallRisk = "high";
+  } else if (majorCount > 0 || riskScore >= 4) {
+    overallRisk = "moderate"; 
+  } else {
+    overallRisk = "low";
+  }
 
   return {
     scanId: scan.id,
@@ -875,7 +902,12 @@ async function generateAnalysisReport(
     processingTime: dynamicProcessingTime,
     criticalFindings,
     secondaryFindings,
-    technicalSummary
+    technicalSummary,
+    // NEW MEDICAL SEVERITY FIELDS
+    overallRisk,
+    criticalCount,
+    majorCount,
+    minorCount
   };
 }
 
