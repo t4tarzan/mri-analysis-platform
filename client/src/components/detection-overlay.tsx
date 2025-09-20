@@ -1,35 +1,29 @@
 import { AlertTriangle, Target, Brain } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-
-interface Detection {
-  id: string;
-  type: "aneurysm" | "anomaly" | "lesion";
-  confidence: number;
-  position: { x: number; y: number; width: number; height: number };
-  label: string;
-}
+import { useCurrentScan, useScan } from "@/hooks/use-scan-data";
+import type { Detection } from "@shared/schema";
 
 export default function DetectionOverlay() {
-  // Sample detection data - in a real app this would come from the API
-  const detections: Detection[] = [
-    {
-      id: "det_1",
-      type: "aneurysm", 
-      confidence: 87,
-      position: { x: 35, y: 25, width: 60, height: 40 },
-      label: "Aneurysm - 87% confidence"
-    },
-    {
-      id: "det_2",
-      type: "anomaly",
-      confidence: 73, 
-      position: { x: 20, y: 45, width: 45, height: 35 },
-      label: "Anomaly - 73% confidence"
-    }
-  ];
+  const { scanId } = useCurrentScan();
+  const { data: scan, isLoading } = useScan(scanId);
+  
+  // Use real detection data from the scan
+  const detections = scan?.detections || [];
 
   const hasDetections = detections.length > 0;
+  
+  if (isLoading) {
+    return (
+      <div className="relative">
+        <Card className="relative medical-3d-viewer rounded-lg overflow-hidden" style={{ aspectRatio: "16/10" }}>
+          <div className="w-full h-full bg-muted/30 animate-pulse flex items-center justify-center">
+            <span className="text-muted-foreground">Loading scan data...</span>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="relative">
@@ -70,10 +64,10 @@ export default function DetectionOverlay() {
             key={detection.id}
             className="absolute pointer-events-none"
             style={{
-              top: `${detection.position.y}%`,
-              left: `${detection.position.x}%`,
-              width: `${detection.position.width}px`,
-              height: `${detection.position.height}px`,
+              top: `${detection.coordinates.y}%`,
+              left: `${detection.coordinates.x}%`,
+              width: `${detection.coordinates.width}px`,
+              height: `${detection.coordinates.height}px`,
             }}
             data-testid={`detection-box-${detection.id}`}
           >
