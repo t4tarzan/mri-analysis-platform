@@ -25,6 +25,35 @@ The platform is built as a modern full-stack web application with a React fronte
 - Created backup of original complex UI for future reference
 - Zero breaking changes to core medical analysis pipeline
 
+## Version 2.0 (September 20, 2025)
+**Real Data Integration & Enhanced Medical Analytics Release**
+
+### Critical Bug Fixes:
+- **Frontend Data Display Issue**: Fixed critical bug where all uploads showed identical hardcoded results (87%/73%)
+- **Cache Refresh Problem**: Resolved infinite cache stale time that prevented data updates
+- **Scan Selection Logic**: Fixed current scan selection to properly sort by upload time
+- **Coordinate Mapping**: Fixed detection overlay coordinate system for proper positioning
+
+### Key Features Enhanced:
+- **Real Unique Analysis**: Each uploaded image now generates different detection results based on actual image characteristics
+- **Improved Layout**: Changed detection results and analysis metrics to vertical stack for better clarity and larger displays
+- **Comprehensive Medical Metrics**: Expanded from 4 to 6 medical-specific analysis metrics:
+  - Risk Score (medical risk assessment)
+  - Vascular Health (blood vessel integrity)
+  - Brain Tissue Density (tissue health quality)
+  - Anatomical Integrity (structural clarity)
+  - Lesion Coverage (affected brain area percentage)
+  - Signal Clarity (scan signal quality)
+- **Professional Grid Layout**: Enhanced metrics dashboard with 2x3 responsive grid
+- **Medical Icons**: Added appropriate medical iconography for each metric type
+
+### Technical Achievements:
+- Fixed React Query configuration for proper data fetching and cache management
+- Enhanced image analysis backend to generate truly unique results per upload
+- Improved frontend component data flow and error handling
+- Maintained full backward compatibility while resolving data display issues
+- Zero data loss during fixes - all existing scan data preserved
+
 # User Preferences
 
 Preferred communication style: Simple, everyday language.
