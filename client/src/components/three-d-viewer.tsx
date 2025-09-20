@@ -102,8 +102,8 @@ export default function ThreeDViewer() {
     // Add detection points based on real scan data
     const pointGeometry = new THREE.SphereGeometry(0.05, 8, 6);
     
-    // Create detection points dynamically from real data
-    detections.forEach((detection, index) => {
+    // Create detection points dynamically from real data (only for detections with coordinates)
+    detections.filter(detection => detection.coordinates).forEach((detection, index) => {
       // Map detection type to color
       const getDetectionColor = (type: string) => {
         switch (type) {
@@ -269,7 +269,7 @@ export default function ThreeDViewer() {
         {/* Legend */}
         <div className="absolute bottom-4 left-4 bg-card/90 backdrop-blur-sm rounded-lg p-3 text-xs space-y-1">
           {/* Show real detections */}
-          {detections.map((detection) => {
+          {detections.filter(detection => detection.coordinates).map((detection) => {
             const getColorClass = (type: string) => {
               switch (type) {
                 case 'aneurysm': return 'bg-red-500';

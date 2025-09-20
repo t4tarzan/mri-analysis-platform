@@ -59,7 +59,7 @@ export default function DetectionOverlay() {
         />
         
         {/* Detection bounding boxes with enhanced styling */}
-        {detections.map((detection) => (
+        {detections.filter(detection => detection.coordinates).map((detection) => (
           <div
             key={detection.id}
             className="absolute pointer-events-none"
@@ -108,7 +108,7 @@ export default function DetectionOverlay() {
             Detection Summary
           </h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {detections.map((detection) => (
+            {detections.filter(detection => detection.coordinates).map((detection) => (
               <div key={detection.id} className="flex items-center justify-between p-2 bg-muted/50 rounded">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-medical-risk-high"></div>
